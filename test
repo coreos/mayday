@@ -1,0 +1,24 @@
+#!/bin/bash -e
+#
+# Run all fleet tests (not including functional)
+#   ./test
+#   ./test -v
+#
+# Run tests for one package
+#   PKG=./unit ./test
+#   PKG=ssh ./test
+#
+
+source ./build
+
+echo "Running tests..."
+go test ./...
+
+echo "Checking gofmt..."
+fmtRes=$(gofmt -l .)
+if [ -n "${fmtRes}" ]; then
+	echo -e "gofmt checking failed:\n${fmtRes}"
+	exit 255
+fi
+
+echo "Success"
