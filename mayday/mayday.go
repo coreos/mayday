@@ -1,7 +1,9 @@
 package mayday
 
-import "io/ioutil"
-import "log"
+import (
+	"io/ioutil"
+	"log"
+)
 
 func AThing() string {
 	return "MAYDAY!"
@@ -39,5 +41,3 @@ func GrabFile(w *InMemWorkspace, path string) error {
 
 	return nil
 }
-
-// vim: sw=4 ts=4
