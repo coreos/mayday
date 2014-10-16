@@ -75,13 +75,6 @@ func (c *Command) Run(workspace string) error {
 	}
 	// If we get this far, the command succeeded. Huzzah!
 
-	if c.Link == "" {
-		return nil
-	}
-	lp := path.Join(workspace, c.Link)
-	log.Printf("Creating link (%s -> %s)", lp, fn)
-	if err := os.Symlink(fn, lp); err != nil {
-		return fmt.Errorf("error creating link: %v", err)
-	}
-	return nil
+	// If necessary, create a symlink
+	return maybeCreateLink(c.Link, fn, workspace)
 }
