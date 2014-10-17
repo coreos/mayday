@@ -46,6 +46,22 @@ var (
 			Link: "df",
 		},
 		{
+			Args: []string{"ip", "-o", "addr", "show"},
+			Link: "ip_addr_show",
+		},
+		{
+			Args: []string{"ip", "-o", "link", "show"},
+			Link: "ip_link_show",
+		},
+		{
+			Args: []string{"ip", "-o", "route", "show"},
+			Link: "ip_route_show",
+		},
+		{
+			Args: []string{"netstat", "-neopa"},
+			Link: "netstat",
+		},
+		{
 			Args: []string{"df", "-ali"},
 		},
 		{
