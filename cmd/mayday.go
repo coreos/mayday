@@ -30,11 +30,45 @@ var (
 			Link: "meminfo",
 		},
 		{
+			Path: "/etc/os-release",
+			Link: "os-release",
+		},
+		{
 			Path: "/proc/mounts",
 			Link: "mounts",
 		},
 	}
 	commands = []mayday.Command{
+		{
+			Args: []string{"hostname"},
+			Link: "hostname",
+		},
+		{
+			Args: []string{"date"},
+			Link: "date",
+		},
+		{
+			Args: []string{"systemd-cgls"},
+		},
+		{
+			Args: []string{"systemd-cgtop", "-n1"},
+		},
+		{
+			Args: []string{"ps", "fauxwww"},
+			Link: "ps",
+		},
+		{
+			Args: []string{"lsmod"},
+			Link: "lsmod",
+		},
+		{
+			Args: []string{"lspci"},
+			Link: "lspci",
+		},
+		{
+			Args: []string{"lsof", "-b", "-M", "-n", "-l"},
+			Link: "lsof",
+		},
 		{
 			Args: []string{"blkid"},
 		},
