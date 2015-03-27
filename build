@@ -14,4 +14,4 @@ export GOPATH=${PWD}/gopath
 eval $(go env)
 
 echo "Building mayday..."
-go build -o bin/mayday ${REPO_PATH}/cmd
+go build -o bin/mayday ${REPO_PATH}
