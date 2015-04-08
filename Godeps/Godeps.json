@@ -1,0 +1,19 @@
+{
+	"ImportPath": "github.com/coreos/mayday",
+	"GoVersion": "go1.3.3",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/coreos/go-systemd/dbus",
+			"Comment": "v2-45-gb5a19de",
+			"Rev": "b5a19de2c22245e249d45cc782689db70e457e46"
+		},
+		{
+			"ImportPath": "github.com/godbus/dbus",
+			"Comment": "v2",
+			"Rev": "88765d85c0fdadcd98a54e30694fa4e4f5b51133"
+		}
+	]
+}

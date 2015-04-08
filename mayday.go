@@ -8,12 +8,16 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/coreos/mayday/mayday"
+
+	"github.com/coreos/mayday/Godeps/_workspace/src/github.com/coreos/go-systemd/dbus"
 )
 
 const (
@@ -105,6 +109,65 @@ var (
 	}
 )
 
+func getJournals(dir string) error {
+	c, err := dbus.New()
+	if err != nil {
+		return err
+	}
+
+	defer c.Close()
+
+	units, err := c.ListUnits()
+	if err != nil {
+		return err
+	}
+
+	pathre := regexp.MustCompile(`/usr/lib(32|64)?/systemd/system/.*\.service`)
+
+	var svcs []string
+
+	// build a list of units that live in /usr/lib/system/system
+	for _, u := range units {
+		if p, err := c.GetUnitProperty(u.Name, "FragmentPath"); err == nil {
+			path := p.Value.Value().(string)
+
+			if pathre.MatchString(path) {
+				svcs = append(svcs, u.Name)
+			}
+		}
+	}
+
+	// get the journals of the units
+	for _, svc := range svcs {
+		daysago := 7
+
+		logfile := path.Join(dir, fmt.Sprintf("%s.log", svc))
+
+		log.Printf("collecting %d days of logs from %q", daysago, svc)
+
+		out, err := os.Create(logfile)
+		if err != nil {
+			log.Printf("can't make log for %s: %s; skipping", svc, err)
+			continue
+		}
+
+		cmd := exec.Command("journalctl", "--since", fmt.Sprintf("-%dd", daysago), "-l", "--utc", "--no-pager", "-u", svc)
+		cmd.Stdout = out
+
+		err = cmd.Run()
+		out.Close()
+
+		if err != nil {
+			log.Printf("failed to dump log for %s: %s", svc, err)
+			// journalctl seems to return a non-zero status when a service's log is empty,
+			// so just delete the empty file.
+			_ = os.Remove(logfile)
+		}
+	}
+
+	return nil
+}
+
 func main() {
 	now := time.Now().Format("200601021504-")
 	ws, err := ioutil.TempDir("", dirPrefix+now)
@@ -116,6 +179,16 @@ func main() {
 	if err := os.MkdirAll(path.Join(ws, mayday.OutputDir), 0700); err != nil {
 		log.Fatalf("error creating command output directory: %v", err)
 	}
+
+	journals := path.Join(ws, "journals")
+	if err := os.MkdirAll(journals, 0700); err != nil {
+		log.Fatalf("error creating command output directory: %v", err)
+	}
+
+	if err = getJournals(journals); err != nil {
+		log.Printf("failed collecting journals: %s", err)
+	}
+
 	// TODO(jonboulle): parallelise
 	// TODO(jonboulle): handle errors
 	for _, f := range files {
