@@ -106,6 +106,30 @@ var (
 			Args: []string{"free", "-m"},
 			Link: "free",
 		},
+		{
+			Args: []string{"systemctl", "list-units", "-a"},
+			Link: "all_units",
+		},
+		{
+			Args: []string{"systemctl", "list-units", "--state=running"},
+			Link: "running_units",
+		},
+		{
+			Args: []string{"systemctl", "status", "etcd.service"},
+			Link: "etcd_status",
+		},
+		{
+			Args: []string{"systemctl", "status", "etcd2.service"},
+			Link: "etcd2_status",
+		},
+		{
+			Args: []string{"systemctl", "status", "fleet.service"},
+			Link: "fleet_status",
+		},
+		{
+			Args: []string{"systemctl", "status", "flanneld.service"},
+			Link: "flanneld_status",
+		},
 	}
 )
 
