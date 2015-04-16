@@ -130,6 +130,17 @@ var (
 			Args: []string{"systemctl", "status", "flanneld.service"},
 			Link: "flanneld_status",
 		},
+		{
+			Args: []string{"/bin/sh", "-c", `registry=$(docker ps -a --no-trunc | grep -F quay.io/coreos/registry | awk '{ print $1 }')
+				if [ ${registry} ]; then
+					dir=$(docker inspect -f '{{ index .Volumes "/var/log" }}' ${registry})
+					tar -P --transform "s,${dir},var/log," -c ${dir}
+				else
+					exit 1
+				fi`},
+			Link: "enterprise_registry_log.tar",
+			Name: "enterprise_registry_log.tar",
+		},
 	}
 )
 
