@@ -20,6 +20,7 @@ const (
 type Command struct {
 	Args []string // all of the arguments, e.g. ["free", "-m"]
 	Link string   // short name to link to the output (optional), e.g. "free"
+	Name string   // file in OutputDir that command output goes to (optional)
 }
 
 func (c *Command) outputFile() string {
@@ -38,8 +39,13 @@ func (c *Command) Run(workspace string) error {
 		return fmt.Errorf("could not find %q in PATH", name)
 	}
 
+	ofname := c.outputFile()
+	if c.Name != "" {
+		ofname = c.Name
+	}
+
 	// Set up the output file
-	fn := path.Join(workspace, OutputDir, c.outputFile())
+	fn := path.Join(workspace, OutputDir, ofname)
 	f, err := os.OpenFile(fn, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0600)
 	if err != nil {
 		return fmt.Errorf("error opening file for output: %v", err)
