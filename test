@@ -12,7 +12,18 @@
 source ./build
 
 echo "Running tests..."
-go test ./...
+
+if [[ $* == *--coverprofile* ]]; then
+	# generate html cover document
+	mkdir -p tmp/
+	go test github.com/coreos/mayday/mayday -coverprofile tmp/mayday.out
+	go test github.com/coreos/mayday -coverprofile tmp/main.out
+	go tool cover -html=tmp/mayday.out -o tmp/mayday.html
+	go tool cover -html=tmp/main.out -o tmp/main.html
+else
+	# just report percentage
+	go test ./... -cover
+fi
 
 echo "Checking gofmt..."
 fmtRes=$(gofmt -l .)
