@@ -1,33 +1,48 @@
 package mayday
 
 import (
+	"archive/tar"
+	"bufio"
+	"bytes"
 	"fmt"
 	"log"
-	"os"
 	"os/exec"
-	"path"
 	"strings"
 	"time"
 )
 
 const (
-	OutputDir = "mayday_commands"
-
 	defaultTimeout = 30 * time.Second
 )
 
 // Command encapsulates a command (a list of arguments) to be run
 type Command struct {
-	Args []string // all of the arguments, e.g. ["free", "-m"]
-	Link string   // short name to link to the output (optional), e.g. "free"
+	Args    []string      // all of the arguments, e.g. ["free", "-m"]
+	Link    string        // short name to link to the output (optional), e.g. "free"
+	Content *bytes.Buffer // the contents of the command, populated by Run()
 }
 
-func (c *Command) outputFile() string {
+func (c *Command) outputName() string {
 	return strings.Join(c.Args, "_")
 }
 
-// Run runs the command, saving output to the given workspace
-func (c *Command) Run(workspace string) error {
+func (c *Command) header() *tar.Header {
+	var header tar.Header
+	header.Name = "mayday_commands/" + c.outputName()
+	header.Size = int64(c.Content.Len())
+	header.ModTime = time.Now()
+
+	return &header
+
+}
+
+// Run runs the command, saving output to a Reader
+func (c *Command) Run() error {
+
+	var b bytes.Buffer
+	c.Content = &b
+	writer := bufio.NewWriter(c.Content)
+
 	// Sanitize provided arguments
 	if len(c.Args) < 1 {
 		return fmt.Errorf("cannot run empty Command")
@@ -38,25 +53,17 @@ func (c *Command) Run(workspace string) error {
 		return fmt.Errorf("could not find %q in PATH", name)
 	}
 
-	// Set up the output file
-	fn := path.Join(workspace, OutputDir, c.outputFile())
-	f, err := os.OpenFile(fn, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0600)
-	if err != nil {
-		return fmt.Errorf("error opening file for output: %v", err)
-	}
-
 	// Set up the actual Cmd to be run
 	cmd := exec.Cmd{
 		Path:   p,
 		Args:   c.Args,
-		Stdout: f,
+		Stdout: writer,
 		// TODO(jonboulle): something with stderr?
 		// sosreport just appears to ignore it entirely.
 	}
 
 	// Launch the Cmd, and set up a timeout
-	log.Printf("Running Command: %q\n", strings.Join(cmd.Args, " "))
-	log.Printf("Saving output to %v\n", fn)
+	log.Printf("Running command: %q\n", strings.Join(cmd.Args, " "))
 	cmd.Start()
 	wc := make(chan error, 1)
 	go func() {
@@ -75,6 +82,5 @@ func (c *Command) Run(workspace string) error {
 	}
 	// If we get this far, the command succeeded. Huzzah!
 
-	// If necessary, create a symlink
-	return maybeCreateLink(c.Link, fn, workspace)
+	return nil
 }
