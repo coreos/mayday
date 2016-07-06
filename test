@@ -12,7 +12,7 @@
 source ./build
 
 echo "Running tests..."
-go test ./...
+go test ./... -cover
 
 echo "Checking gofmt..."
 fmtRes=$(gofmt -l .)
