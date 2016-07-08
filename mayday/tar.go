@@ -11,6 +11,13 @@ import (
 	"time"
 )
 
+type Tarable interface {
+	Content() io.Reader
+	Header() *tar.Header
+	Name() string // full path of file in archive
+	Link() string // short link to file in archive
+}
+
 type Tar struct {
 	gzw *gzip.Writer
 	tw  *tar.Writer
@@ -22,7 +29,7 @@ func (t *Tar) Init(w io.Writer) error {
 	return nil
 }
 
-func (t *Tar) Add(contents io.Reader, header *tar.Header) error {
+func (t *Tar) Add(tb Tarable) error {
 
 	// virtual files, like those in /proc, report a size of 0 to stat().
 	// this means the header in the tarfile reports a size of 0 for the file.
@@ -30,15 +37,12 @@ func (t *Tar) Add(contents io.Reader, header *tar.Header) error {
 	// number of bytes to copy.
 
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(contents)
+	buf.ReadFrom(tb.Content())
+	header := tb.Header()
 	header.Size = int64(buf.Len())
 	header.Name = strings.TrimPrefix(header.Name, "/")
 
 	var err error
-
-	if err != nil {
-		return err
-	}
 
 	if err = t.tw.WriteHeader(header); err != nil {
 		return err

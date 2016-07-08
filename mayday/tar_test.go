@@ -12,16 +12,32 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type TestTarable struct{}
+
+func (tt *TestTarable) Run() error { return nil }
+
+func (tt *TestTarable) Content() io.Reader {
+	return strings.NewReader("test_content")
+}
+
+func (tt *TestTarable) Header() *tar.Header {
+	var h tar.Header
+	h.Typeflag = tar.TypeReg
+	h.Name = "test"
+	return &h
+}
+
+func (tt *TestTarable) Name() string { return "test_name" }
+func (tt *TestTarable) Link() string { return "" }
+
 func TestContentsAdded(t *testing.T) {
 	buf := new(bytes.Buffer)
 	var tf mayday.Tar
 	tf.Init(buf)
 
-	var h tar.Header
-	h.Typeflag = tar.TypeReg
-	h.Name = "test"
+	var testtar *TestTarable
 
-	err := tf.Add(strings.NewReader("test_content"), &h)
+	err := tf.Add(testtar)
 	assert.Nil(t, err)
 	tf.Close()
 

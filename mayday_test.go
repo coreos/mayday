@@ -1,10 +1,8 @@
 package main
 
 import (
-	"testing"
-
-	"github.com/coreos/mayday/mayday"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 const (
@@ -35,12 +33,12 @@ func TestConfigParse(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	command0 := mayday.Command{Args: []string{"hostname"}}
+	command0 := Command{Args: []string{"hostname"}}
 	assert.EqualValues(t, commands[0], command0)
 
-	command1 := mayday.Command{Args: []string{"lsof", "-b", "-M", "-n", "-l"}, Link: "lsof"}
+	command1 := Command{Args: []string{"lsof", "-b", "-M", "-n", "-l"}, Link: "lsof"}
 	assert.EqualValues(t, commands[1], command1)
 
-	assert.EqualValues(t, files[0], mayday.File{Name: "/proc/vmstat"})
-	assert.EqualValues(t, files[1], mayday.File{Name: "/proc/meminfo", Link: "meminfo"})
+	assert.EqualValues(t, files[0], File{Name: "/proc/vmstat"})
+	assert.EqualValues(t, files[1], File{Name: "/proc/meminfo", Link: "meminfo"})
 }

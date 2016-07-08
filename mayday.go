@@ -17,9 +17,19 @@ const (
 	defaultConfig = "/etc/mayday.conf"
 )
 
+type File struct {
+	Name string
+	Link string
+}
+
+type Command struct {
+	Args []string
+	Link string
+}
+
 type Config struct {
-	Files    []mayday.File
-	Commands []mayday.Command
+	Files    []File
+	Commands []Command
 }
 
 func openConfig() (string, error) {
@@ -32,11 +42,11 @@ func openConfig() (string, error) {
 
 	log.Printf("Reading configuration from %v\n", configFile)
 	cbytes, err := ioutil.ReadFile(configFile)
-	cstring := string(cbytes[:])
+	cstring := string(cbytes)
 	return cstring, err
 }
 
-func readConfig(dat string) ([]mayday.File, []mayday.Command, error) {
+func readConfig(dat string) ([]File, []Command, error) {
 	var c Config
 
 	err := json.Unmarshal([]byte(dat), &c)
@@ -58,28 +68,40 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for i := 0; i < len(files); i++ {
-		files[i].Content, err = os.Open(files[i].Name)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fi, err := os.Stat(files[i].Name)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		header, err := tar.FileInfoHeader(fi, files[i].Name)
-		files[i].Header = header
-		files[i].Header.Name = files[i].Name
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	journals, err := mayday.GetJournals()
+	journals, err := mayday.ListJournals()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	var tarables []mayday.Tarable
+
+	for _, f := range files {
+		content, err := os.Open(f.Name)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer content.Close()
+
+		fi, err := os.Stat(f.Name)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		header, err := tar.FileInfoHeader(fi, f.Name)
+		header.Name = f.Name
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		tarables = append(tarables, mayday.NewFile(content, header, f.Name, f.Link))
+	}
+
+	for _, c := range commands {
+		tarables = append(tarables, mayday.NewCommand(c.Args, c.Link))
+	}
+
+	for _, j := range journals {
+		tarables = append(tarables, j)
 	}
 
 	now := time.Now().Format("200601021504.999999999")
@@ -94,7 +116,7 @@ func main() {
 	defer tarfile.Close()
 	t.Init(tarfile)
 
-	mayday.Run(t, files, commands, journals)
+	mayday.Run(t, tarables)
 	t.Close()
 
 	log.Printf("Output saved in %v\n", outputFile)

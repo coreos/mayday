@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io"
 	"log"
 	"os/exec"
 	"strings"
@@ -15,39 +16,61 @@ const (
 	defaultTimeout = 30 * time.Second
 )
 
-// Command encapsulates a command (a list of arguments) to be run
+// command encapsulates a command (a list of arguments) to be run
 type Command struct {
-	Args    []string      // all of the arguments, e.g. ["free", "-m"]
-	Link    string        // short name to link to the output (optional), e.g. "free"
-	Content *bytes.Buffer // the contents of the command, populated by Run()
+	args    []string      // all of the arguments, e.g. ["free", "-m"]
+	link    string        // short name to link to the output (optional), e.g. "free"
+	content *bytes.Buffer // the contents of the command, populated by Run()
 }
 
-func (c *Command) outputName() string {
-	return strings.Join(c.Args, "_")
+func NewCommand(args []string, link string) *Command {
+	c := new(Command)
+	c.args = args
+	c.link = link
+	return c
 }
 
-func (c *Command) header() *tar.Header {
+func (c *Command) Name() string {
+	return "mayday_commands/" + strings.Join(c.args, "_")
+}
+
+func (c *Command) Header() *tar.Header {
+	// content needs to be populated before the header can be generated
+	if c.content == nil {
+		c.Run()
+	}
 	var header tar.Header
-	header.Name = "mayday_commands/" + c.outputName()
-	header.Size = int64(c.Content.Len())
+	header.Name = c.Name()
+	header.Size = int64(c.content.Len())
+	header.Mode = 0666
 	header.ModTime = time.Now()
 
 	return &header
+}
 
+func (c *Command) Content() io.Reader {
+	if c.content == nil {
+		c.Run()
+	}
+	return c.content
+}
+
+func (c *Command) Link() string {
+	return c.link
 }
 
 // Run runs the command, saving output to a Reader
 func (c *Command) Run() error {
 
 	var b bytes.Buffer
-	c.Content = &b
-	writer := bufio.NewWriter(c.Content)
+	c.content = &b
+	writer := bufio.NewWriter(c.content)
 
 	// Sanitize provided arguments
-	if len(c.Args) < 1 {
+	if len(c.args) < 1 {
 		return fmt.Errorf("cannot run empty Command")
 	}
-	name := c.Args[0]
+	name := c.args[0]
 	p, err := exec.LookPath(name)
 	if err != nil {
 		return fmt.Errorf("could not find %q in PATH", name)
@@ -56,7 +79,7 @@ func (c *Command) Run() error {
 	// Set up the actual Cmd to be run
 	cmd := exec.Cmd{
 		Path:   p,
-		Args:   c.Args,
+		Args:   c.args,
 		Stdout: writer,
 		// TODO(jonboulle): something with stderr?
 		// sosreport just appears to ignore it entirely.
