@@ -1,44 +1,40 @@
 package mayday
 
 import (
-	"fmt"
+	"archive/tar"
 	"io"
 	"log"
-	"os"
-	"path"
 )
 
-// File encapsulates a file to be collected directly from the system
-type File struct {
-	Path string // full path to the file on the host system
-	Link string // short name to link to the output (optional), e.g. "free"
+type MaydayFile struct {
+	name    string      // the name of the file on the filesystem
+	content io.Reader   // a Reader containing the contents of the file
+	header  *tar.Header // a Header containing file path, file size, etc
+	link    string      // a link to make in the root of the tarball
 }
 
-// Collect copies the contents of File into a file of the same path in
-// the given workspace
-func (f *File) Collect(workspace string) error {
-	// Set everything up
-	fn := path.Join(workspace, f.Path)
-	dir := path.Dir(fn)
-	if err := os.MkdirAll(dir, 0700); err != nil {
-		return fmt.Errorf("error creating output directory: %v", err)
-	}
-	dst, err := os.OpenFile(fn, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0600)
-	if err != nil {
-		return fmt.Errorf("error opening output file: %v", err)
-	}
-	src, err := os.Open(f.Path)
-	if err != nil {
-		return fmt.Errorf("error opening source file: %v", err)
-	}
+func NewFile(c io.Reader, h *tar.Header, n string, l string) MaydayFile {
+	f := new(MaydayFile)
+	f.name = n
+	f.content = c
+	f.header = h
+	f.link = l
+	return *f
+}
 
-	// Actually copy the file
-	log.Printf("Collecting file %q", f.Path)
-	_, err = io.Copy(dst, src)
-	if err != nil {
-		return fmt.Errorf("error copying file: %v", err)
-	}
+func (f MaydayFile) Content() io.Reader {
+	log.Printf("Collecting file: %q\n", f.name)
+	return f.content
+}
 
-	// If necessary, create a symlink
-	return maybeCreateLink(f.Link, fn, workspace)
+func (f MaydayFile) Header() *tar.Header {
+	return f.header
+}
+
+func (f MaydayFile) Name() string {
+	return f.name
+}
+
+func (f MaydayFile) Link() string {
+	return f.link
 }

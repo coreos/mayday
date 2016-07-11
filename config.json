@@ -1,0 +1,105 @@
+{
+  "files": [
+    {
+      "name": "/proc/vmstat"
+    }, {
+      "name": "/proc/meminfo",
+      "link": "meminfo"
+    }, {
+      "name": "/proc/mounts",
+      "link": "mounts"
+    }, {
+      "name": "/etc/os-release",
+      "link": "os-release"
+    }
+  ],
+  "commands": [
+    {
+      "args": ["hostname"],
+      "link": "hostname"
+    },
+    {
+      "args": ["date"],
+      "link": "date"
+    },
+    {
+      "args": ["systemd-cgls"]
+    },
+    {
+      "args": ["systemd-cgtop", "-n1"]
+    },
+    {
+      "args": ["ps", "fauxwww"],
+      "link": "ps"
+    },
+    {
+      "args": ["lsmod"],
+      "link": "lsmod"
+    },
+    {
+      "args": ["lspci"],
+      "link": "lspci"
+    },
+    {
+      "args": ["lsof", "-b", "-M", "-n", "-l"],
+      "link": "lsof"
+    },
+    {
+      "args": ["blkid"]
+    },
+    {
+      "args": ["btrfs", "fi", "show"]
+    },
+    {
+      "args": ["df", "-al"],
+      "link": "df"
+    },
+    {
+      "args": ["ip", "-o", "addr", "show"],
+      "link": "ip_addr_show"
+    },
+    {
+      "args": ["ip", "-o", "link", "show"],
+      "link": "ip_link_show"
+    },
+    {
+      "args": ["ip", "-o", "route", "show"],
+      "link": "ip_route_show"
+    },
+    {
+      "args": ["netstat", "-neopa"],
+      "link": "netstat"
+    },
+    {
+      "args": ["df", "-ali"]
+    },
+    {
+      "args": ["free", "-m"],
+      "link": "free"
+    },
+    {
+      "args": ["systemctl", "list-units", "-a"],
+      "link": "all_units"
+    },
+    {
+      "args": ["systemctl", "list-units", "--state=running"],
+      "link": "running_units"
+    },
+    {
+      "args": ["systemctl", "status", "etcd.service"],
+      "link": "etcd_status"
+    },
+    {
+      "args": ["systemctl", "status", "etcd2.service"],
+      "link": "etcd2_status"
+    },
+    {
+      "args": ["systemctl", "status", "fleet.service"],
+      "link": "fleet_status"
+    },
+    {
+      "args": ["systemctl", "status", "flanneld.service"],
+      "link": "flanneld_status"
+    }
+  ]
+}
