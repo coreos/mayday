@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/coreos/mayday/mayday"
+	"github.com/coreos/mayday/mayday/rkt"
 )
 
 const (
@@ -73,6 +74,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	pods, err := rkt.GetPods()
+	if err != nil {
+		log.Println("Could not connect to rkt. Verify mayday has permissions to launch the rkt client.")
+		log.Printf("Connection error: %s", err)
+	}
+
 	var tarables []mayday.Tarable
 
 	for _, f := range files {
@@ -102,6 +109,10 @@ func main() {
 
 	for _, j := range journals {
 		tarables = append(tarables, j)
+	}
+
+	for _, p := range pods {
+		tarables = append(tarables, p)
 	}
 
 	now := time.Now().Format("200601021504.999999999")
