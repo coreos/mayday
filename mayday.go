@@ -11,15 +11,17 @@ import (
 	"time"
 
 	"github.com/coreos/mayday/mayday"
+	"github.com/coreos/mayday/mayday/rkt"
+	"github.com/coreos/mayday/mayday/rkt/v1alpha"
 )
 
 var (
 	flagConfigFile *string
-	danger     *bool
+	danger         *bool
 )
 
 const (
-	dirPrefix     = "/mayday"
+	dirPrefix = "/mayday"
 )
 
 type File struct {
@@ -67,6 +69,8 @@ func main() {
 
 	flag.Parse()
 
+	var tarables []mayday.Tarable
+
 	conf, err := openConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -88,7 +92,17 @@ func main() {
 		log.Printf("Connection error: %s", err)
 	}
 
-	var tarables []mayday.Tarable
+	if *danger {
+		log.Println("Danger mode activated. Dump will include rkt pod logs, which may contain sensitive information.")
+		if len(pods) != 0 {
+			for _, p := range pods {
+				if p.State == v1alpha.PodState_POD_STATE_RUNNING {
+					logcmd := []string{"journalctl", "-M", "rkt-" + p.Id}
+					tarables = append(tarables, mayday.NewCommand(logcmd, "/rkt/"+p.Id+".log"))
+				}
+			}
+		}
+	}
 
 	for _, f := range files {
 		content, err := os.Open(f.Name)
