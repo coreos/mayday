@@ -34,6 +34,28 @@ type Command struct {
 	Link string   `mapstructure:"link"`
 }
 
+func openFile(f File) (*mayday.MaydayFile, error) {
+	content, err := os.Open(f.Name)
+	if err != nil {
+		return nil, err
+	}
+	defer content.Close()
+
+	fi, err := os.Stat(f.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	header, err := tar.FileInfoHeader(fi, f.Name)
+	header.Name = f.Name
+	if err != nil {
+		return nil, err
+	}
+
+	opened := mayday.NewFile(content, header, f.Name, f.Link)
+	return &opened, nil
+}
+
 func main() {
 	pflag.BoolP("danger", "d", false, "collect potentially sensitive information (ex, container logs)")
 
@@ -82,24 +104,12 @@ func main() {
 	}
 
 	for _, f := range C.Files {
-		content, err := os.Open(f.Name)
+		mf, err := openFile(f)
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("error opening %s: %s\n", f.Name, err)
+		} else {
+			tarables = append(tarables, mf)
 		}
-		defer content.Close()
-
-		fi, err := os.Stat(f.Name)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		header, err := tar.FileInfoHeader(fi, f.Name)
-		header.Name = f.Name
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		tarables = append(tarables, mayday.NewFile(content, header, f.Name, f.Link))
 	}
 
 	for _, c := range C.Commands {
