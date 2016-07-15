@@ -2,84 +2,61 @@ package main
 
 import (
 	"archive/tar"
-	"encoding/json"
-	"flag"
-	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/coreos/mayday/mayday"
 	"github.com/coreos/mayday/mayday/rkt"
 	"github.com/coreos/mayday/mayday/rkt/v1alpha"
-)
 
-var (
-	flagConfigFile *string
-	danger         *bool
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 const (
 	dirPrefix = "/mayday"
 )
 
+type Config struct {
+	Files    []File    `mapstructure:"files"`
+	Commands []Command `mapstructure:"commands"`
+	Danger   bool
+}
+
 type File struct {
-	Name string
-	Link string
+	Name string `mapstructure:"name"`
+	Link string `mapstructure:"link"`
 }
 
 type Command struct {
-	Args []string
-	Link string
-}
-
-type Config struct {
-	Files    []File
-	Commands []Command
-}
-
-func openConfig() (string, error) {
-	configVar := os.Getenv("MAYDAY_CONFIG_FILE")
-	configFile := strings.Split(configVar, "=")[0]
-
-	if configFile == "" {
-		configFile = *flagConfigFile
-	}
-
-	log.Printf("Reading configuration from %v\n", configFile)
-	cbytes, err := ioutil.ReadFile(configFile)
-	cstring := string(cbytes)
-	return cstring, err
-}
-
-func readConfig(dat string) ([]File, []Command, error) {
-	var c Config
-
-	err := json.Unmarshal([]byte(dat), &c)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return c.Files, c.Commands, nil
+	Args []string `mapstructure:"args"`
+	Link string   `mapstructure:"link"`
 }
 
 func main() {
-	flagConfigFile = flag.String("config-file", "/etc/mayday.conf", "config file location")
-	danger = flag.Bool("danger", false, "collect potentially private information (ex, container logs)")
+	pflag.BoolP("danger", "d", false, "collect potentially sensitive information (ex, container logs)")
 
-	flag.Parse()
+	viper.SetConfigName("config")
+	viper.AddConfigPath("/etc/mayday")
+	viper.AddConfigPath(".")
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatal("Fatal error reading config: %s \n", err)
+	}
+
+	// binds cli flag "danger" to viper config danger
+	viper.BindPFlag("danger", pflag.Lookup("danger"))
+	// cli arg takes precendence over anything in config files
+	pflag.Parse()
 
 	var tarables []mayday.Tarable
 
-	conf, err := openConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
+	var C Config
 
-	files, commands, err := readConfig(conf)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// fill C with configuration data
+	viper.Unmarshal(&C)
 
 	journals, err := mayday.ListJournals()
 	if err != nil {
@@ -92,7 +69,7 @@ func main() {
 		log.Printf("Connection error: %s", err)
 	}
 
-	if *danger {
+	if viper.GetBool("danger") {
 		log.Println("Danger mode activated. Dump will include rkt pod logs, which may contain sensitive information.")
 		if len(pods) != 0 {
 			for _, p := range pods {
@@ -104,7 +81,7 @@ func main() {
 		}
 	}
 
-	for _, f := range files {
+	for _, f := range C.Files {
 		content, err := os.Open(f.Name)
 		if err != nil {
 			log.Fatal(err)
@@ -125,7 +102,7 @@ func main() {
 		tarables = append(tarables, mayday.NewFile(content, header, f.Name, f.Link))
 	}
 
-	for _, c := range commands {
+	for _, c := range C.Commands {
 		tarables = append(tarables, mayday.NewCommand(c.Args, c.Link))
 	}
 
