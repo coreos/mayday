@@ -28,7 +28,7 @@ else
 fi
 
 echo "Checking gofmt..."
-fmtRes=$(gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*"))
+fmtRes=$(gofmt -l $(find * -type f -name '*.go' -not -path "vendor/*"))
 if [ -n "${fmtRes}" ]; then
 	echo -e "gofmt checking failed:\n${fmtRes}"
 	exit 255
