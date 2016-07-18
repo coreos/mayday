@@ -31,7 +31,7 @@ func NewCommand(args []string, link string) *Command {
 }
 
 func (c *Command) Name() string {
-	return "mayday_commands/" + strings.Join(c.args, "_")
+	return "/mayday_commands/" + strings.Join(c.args, "_")
 }
 
 func (c *Command) Header() *tar.Header {

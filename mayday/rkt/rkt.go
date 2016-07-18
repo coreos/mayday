@@ -6,7 +6,9 @@ import (
 	"errors"
 	"io"
 
+	"github.com/coreos/mayday/mayday"
 	"github.com/coreos/mayday/mayday/rkt/v1alpha"
+	"github.com/spf13/viper"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
@@ -114,23 +116,36 @@ var podsFromApi = func() ([]*v1alpha.Pod, error) {
 	return podResp.Pods, err
 }
 
-func GetPods() ([]*Pod, error) {
+func GetPods() ([]*Pod, []*mayday.Command, error) {
 	var pods []*Pod
+	var logs []*mayday.Command
 
 	err := startApi()
 	if err != nil {
-		return pods, err
+		return pods, logs, err
 	}
 	defer closeApi()
 
 	apiPods, err := podsFromApi()
 	if err != nil {
-		return pods, err
+		return pods, logs, err
 	}
 
 	for _, p := range apiPods {
 		pods = append(pods, &Pod{Pod: p})
 	}
 
-	return pods, nil
+	if viper.GetBool("danger") {
+		log.Println("Danger mode activated. Dump will include rkt pod logs, which may contain sensitive information.")
+		if len(pods) != 0 {
+			for _, p := range pods {
+				if p.State == v1alpha.PodState_POD_STATE_RUNNING {
+					logcmd := []string{"journalctl", "-M", "rkt-" + p.Id}
+					logs = append(logs, mayday.NewCommand(logcmd, "/rkt/"+p.Id+".log"))
+				}
+			}
+		}
+	}
+
+	return pods, logs, nil
 }

@@ -8,7 +8,6 @@ import (
 
 	"github.com/coreos/mayday/mayday"
 	"github.com/coreos/mayday/mayday/rkt"
-	"github.com/coreos/mayday/mayday/rkt/v1alpha"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -85,22 +84,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	pods, err := rkt.GetPods()
+	pods, logs, err := rkt.GetPods()
 	if err != nil {
 		log.Println("Could not connect to rkt. Verify mayday has permissions to launch the rkt client.")
 		log.Printf("Connection error: %s", err)
-	}
-
-	if viper.GetBool("danger") {
-		log.Println("Danger mode activated. Dump will include rkt pod logs, which may contain sensitive information.")
-		if len(pods) != 0 {
-			for _, p := range pods {
-				if p.State == v1alpha.PodState_POD_STATE_RUNNING {
-					logcmd := []string{"journalctl", "-M", "rkt-" + p.Id}
-					tarables = append(tarables, mayday.NewCommand(logcmd, "/rkt/"+p.Id+".log"))
-				}
-			}
-		}
 	}
 
 	for _, f := range C.Files {
@@ -122,6 +109,10 @@ func main() {
 
 	for _, p := range pods {
 		tarables = append(tarables, p)
+	}
+
+	for _, l := range logs {
+		tarables = append(tarables, l)
 	}
 
 	now := time.Now().Format("200601021504.999999999")

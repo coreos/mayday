@@ -69,7 +69,7 @@ func TestSuccess(t *testing.T) {
 		return nil, nil
 	}
 
-	_, err := GetPods()
+	_, _, err := GetPods()
 	assert.Nil(t, err)
 
 	assert.True(t, startCalled)
