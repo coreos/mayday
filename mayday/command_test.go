@@ -37,10 +37,10 @@ func TestCommandWithArgs(t *testing.T) {
 
 func TestCommandHeader(t *testing.T) {
 	cmd := NewCommand([]string{"echo", "-e", "hello", "world", "testing"}, "")
-	assert.Equal(t, cmd.Name(), "mayday_commands/echo_-e_hello_world_testing")
+	assert.Equal(t, cmd.Name(), "/mayday_commands/echo_-e_hello_world_testing")
 
 	cmd.Run() // cmd.Content needs to be populated for header()
 
 	hdr := cmd.Header()
-	assert.Equal(t, hdr.Name, "mayday_commands/echo_-e_hello_world_testing")
+	assert.Equal(t, hdr.Name, "/mayday_commands/echo_-e_hello_world_testing")
 }

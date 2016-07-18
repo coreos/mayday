@@ -141,7 +141,9 @@ func GetPods() ([]*Pod, []*mayday.Command, error) {
 			for _, p := range pods {
 				if p.State == v1alpha.PodState_POD_STATE_RUNNING {
 					logcmd := []string{"journalctl", "-M", "rkt-" + p.Id}
-					logs = append(logs, mayday.NewCommand(logcmd, "/rkt/"+p.Id+".log"))
+					cmd := mayday.NewCommand(logcmd, "")
+					cmd.Output = "/rkt/" + p.Id + ".log"
+					logs = append(logs, cmd)
 				}
 			}
 		}
