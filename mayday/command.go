@@ -36,6 +36,10 @@ func (c *Command) Name() string {
 	return c.Output
 }
 
+func (c *Command) Args() []string {
+	return c.args
+}
+
 func (c *Command) Header() *tar.Header {
 	// content needs to be populated before the header can be generated
 	if c.content == nil {
