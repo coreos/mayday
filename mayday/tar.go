@@ -19,13 +19,15 @@ type Tarable interface {
 }
 
 type Tar struct {
-	gzw *gzip.Writer
-	tw  *tar.Writer
+	gzw    *gzip.Writer
+	tw     *tar.Writer
+	subdir string // subdirectory to put files in to prevent polluting current directory
 }
 
-func (t *Tar) Init(w io.Writer) error {
+func (t *Tar) Init(w io.Writer, subdir string) error {
 	t.gzw = gzip.NewWriter(w)
 	t.tw = tar.NewWriter(t.gzw)
+	t.subdir = subdir
 	return nil
 }
 
@@ -40,7 +42,7 @@ func (t *Tar) Add(tb Tarable) error {
 	buf.ReadFrom(tb.Content())
 	header := tb.Header()
 	header.Size = int64(buf.Len())
-	header.Name = strings.TrimPrefix(header.Name, "/")
+	header.Name = t.subdir + "/" + strings.TrimPrefix(header.Name, "/")
 
 	var err error
 
@@ -62,7 +64,8 @@ func (t *Tar) MaybeMakeLink(src string, dst string) error {
 	}
 
 	var header tar.Header
-	header.Name = src
+	header.Name = t.subdir + "/" + src
+	// relative path from location of link, already inside t.subdir
 	header.Linkname = strings.TrimPrefix(dst, "/")
 	header.Typeflag = tar.TypeSymlink
 	header.ModTime = time.Now()
