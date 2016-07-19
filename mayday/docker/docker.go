@@ -2,7 +2,6 @@ package docker
 
 import (
 	"archive/tar"
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"github.com/coreos/mayday/mayday"
@@ -35,15 +34,6 @@ func (d *DockerContainer) Content() io.Reader {
 		return d.content
 	}
 
-	if viper.GetBool("danger") {
-		var b bytes.Buffer
-		writer := bufio.NewWriter(&b)
-		io.Copy(writer, d.file)
-
-		d.content = &b
-		return d.content
-	}
-
 	// unmarshal docker config into interface
 	var config interface{}
 
@@ -57,8 +47,11 @@ func (d *DockerContainer) Content() io.Reader {
 		log.Printf("error reading docker container configuration: %s", err)
 	}
 	configInterface := config.(map[string]interface{})
-	configConfig := configInterface["Config"].(map[string]interface{})
-	delete(configConfig, "Env")
+
+	if !viper.GetBool("danger") {
+		configConfig := configInterface["Config"].(map[string]interface{})
+		delete(configConfig, "Env")
+	}
 
 	byteContent, err := json.MarshalIndent(configInterface, "", "  ")
 	if err != nil {
