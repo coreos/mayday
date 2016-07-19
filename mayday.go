@@ -2,106 +2,117 @@ package main
 
 import (
 	"archive/tar"
-	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/coreos/mayday/mayday"
+	"github.com/coreos/mayday/mayday/rkt"
+
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 const (
-	dirPrefix     = "/mayday"
-	defaultConfig = "/etc/mayday.conf"
+	dirPrefix = "/mayday"
 )
 
+type Config struct {
+	Files    []File    `mapstructure:"files"`
+	Commands []Command `mapstructure:"commands"`
+	Danger   bool
+}
+
 type File struct {
-	Name string
-	Link string
+	Name string `mapstructure:"name"`
+	Link string `mapstructure:"link"`
 }
 
 type Command struct {
-	Args []string
-	Link string
+	Args []string `mapstructure:"args"`
+	Link string   `mapstructure:"link"`
 }
 
-type Config struct {
-	Files    []File
-	Commands []Command
-}
-
-func openConfig() (string, error) {
-	configVar := os.Getenv("MAYDAY_CONFIG_FILE")
-	configFile := strings.Split(configVar, "=")[0]
-
-	if configFile == "" {
-		configFile = defaultConfig
-	}
-
-	log.Printf("Reading configuration from %v\n", configFile)
-	cbytes, err := ioutil.ReadFile(configFile)
-	cstring := string(cbytes)
-	return cstring, err
-}
-
-func readConfig(dat string) ([]File, []Command, error) {
-	var c Config
-
-	err := json.Unmarshal([]byte(dat), &c)
+func openFile(f File) (*mayday.MaydayFile, error) {
+	content, err := os.Open(f.Name)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
-	return c.Files, c.Commands, nil
+	defer content.Close()
+
+	fi, err := os.Stat(f.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	header, err := tar.FileInfoHeader(fi, f.Name)
+	header.Name = f.Name
+	if err != nil {
+		return nil, err
+	}
+
+	opened := mayday.NewFile(content, header, f.Name, f.Link)
+	return &opened, nil
 }
 
 func main() {
+	pflag.BoolP("danger", "d", false, "collect potentially sensitive information (ex, container logs)")
 
-	conf, err := openConfig()
+	viper.SetConfigName("config")
+	viper.AddConfigPath("/etc/mayday")
+	viper.AddConfigPath(".")
+
+	err := viper.ReadInConfig()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Fatal error reading config: %s \n", err)
 	}
 
-	files, commands, err := readConfig(conf)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// binds cli flag "danger" to viper config danger
+	viper.BindPFlag("danger", pflag.Lookup("danger"))
+	// cli arg takes precendence over anything in config files
+	pflag.Parse()
+
+	var tarables []mayday.Tarable
+
+	var C Config
+
+	// fill C with configuration data
+	viper.Unmarshal(&C)
 
 	journals, err := mayday.ListJournals()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var tarables []mayday.Tarable
-
-	for _, f := range files {
-		content, err := os.Open(f.Name)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer content.Close()
-
-		fi, err := os.Stat(f.Name)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		header, err := tar.FileInfoHeader(fi, f.Name)
-		header.Name = f.Name
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		tarables = append(tarables, mayday.NewFile(content, header, f.Name, f.Link))
+	pods, logs, err := rkt.GetPods()
+	if err != nil {
+		log.Println("Could not connect to rkt. Verify mayday has permissions to launch the rkt client.")
+		log.Printf("Connection error: %s", err)
 	}
 
-	for _, c := range commands {
+	for _, f := range C.Files {
+		mf, err := openFile(f)
+		if err != nil {
+			log.Printf("error opening %s: %s\n", f.Name, err)
+		} else {
+			tarables = append(tarables, mf)
+		}
+	}
+
+	for _, c := range C.Commands {
 		tarables = append(tarables, mayday.NewCommand(c.Args, c.Link))
 	}
 
 	for _, j := range journals {
 		tarables = append(tarables, j)
+	}
+
+	for _, p := range pods {
+		tarables = append(tarables, p)
+	}
+
+	for _, l := range logs {
+		tarables = append(tarables, l)
 	}
 
 	now := time.Now().Format("200601021504.999999999")

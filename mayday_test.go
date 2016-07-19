@@ -1,7 +1,9 @@
 package main
 
 import (
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
@@ -28,17 +30,20 @@ const (
 `
 )
 
-func TestConfigParse(t *testing.T) {
-	files, commands, err := readConfig(confStr)
+func TestConfigStruct(t *testing.T) {
+	// test that the config struct is set up to unmarshal a config file
+	viper.SetConfigType("yaml")
+	viper.ReadConfig(strings.NewReader(confStr))
 
-	assert.Nil(t, err)
+	var C Config
+	viper.Unmarshal(&C)
 
 	command0 := Command{Args: []string{"hostname"}}
-	assert.EqualValues(t, commands[0], command0)
+	assert.EqualValues(t, C.Commands[0], command0)
 
 	command1 := Command{Args: []string{"lsof", "-b", "-M", "-n", "-l"}, Link: "lsof"}
-	assert.EqualValues(t, commands[1], command1)
+	assert.EqualValues(t, C.Commands[1], command1)
 
-	assert.EqualValues(t, files[0], File{Name: "/proc/vmstat"})
-	assert.EqualValues(t, files[1], File{Name: "/proc/meminfo", Link: "meminfo"})
+	assert.EqualValues(t, C.Files[0], File{Name: "/proc/vmstat"})
+	assert.EqualValues(t, C.Files[1], File{Name: "/proc/meminfo", Link: "meminfo"})
 }

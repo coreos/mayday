@@ -21,17 +21,19 @@ type Command struct {
 	args    []string      // all of the arguments, e.g. ["free", "-m"]
 	link    string        // short name to link to the output (optional), e.g. "free"
 	content *bytes.Buffer // the contents of the command, populated by Run()
+	Output  string        // name of command output file
 }
 
 func NewCommand(args []string, link string) *Command {
 	c := new(Command)
 	c.args = args
 	c.link = link
+	c.Output = "/mayday_commands/" + strings.Join(c.args, "_")
 	return c
 }
 
 func (c *Command) Name() string {
-	return "mayday_commands/" + strings.Join(c.args, "_")
+	return c.Output
 }
 
 func (c *Command) Header() *tar.Header {
