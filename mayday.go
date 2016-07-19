@@ -28,7 +28,6 @@ const (
 type Config struct {
 	Files    []File    `mapstructure:"files"`
 	Commands []Command `mapstructure:"commands"`
-	Danger   bool
 }
 
 type File struct {
@@ -63,32 +62,35 @@ func openFile(f File) (*file.MaydayFile, error) {
 }
 
 func main() {
+	pflag.StringP("config-dir", "c", "/etc/mayday", "directory containing configuration file")
 	pflag.BoolP("danger", "d", false, "collect potentially sensitive information (ex, container logs)")
 	pflag.StringP("profile", "p", "default", `set of data to be collected. default: "everything"`)
 	pflag.StringP("output", "o", "", "output file (default: /tmp/mayday-{hostname}-{current time}.tar.gz)")
 
-	// binds cli flag "danger" to viper config danger
+	// binds cli flag "danger" to viper config danger, etc.
 	viper.BindPFlag("danger", pflag.Lookup("danger"))
+	viper.BindPFlag("config-dir", pflag.Lookup("config-dir"))
 	viper.BindPFlag("output", pflag.Lookup("output"))
+	viper.BindPFlag("profile", pflag.Lookup("profile"))
 	// cli arg takes precendence over anything in config files
 	pflag.Parse()
 
-	viper.SetConfigName(pflag.Lookup("profile").Value.String())
-	viper.AddConfigPath("/etc/mayday")
-	viper.AddConfigPath(".")
+	viper.SetConfigName(viper.GetString("profile"))
+	viper.AddConfigPath(viper.GetString("config-dir"))
+
+	viper.SetConfigName(viper.GetString("profile"))
 
 	err := viper.ReadInConfig()
 	if err != nil {
 		// viper returns an `unsupported config type ""` error if it can't find a file
 		// https://github.com/spf13/viper/issues/210
 		if strings.HasSuffix(err.Error(), `Type ""`) {
-			log.Printf("Could not find configuration file in /etc/mayday/config.json " +
-				"or in working directory.")
-			os.Exit(1)
+			log.Fatalf("Could not find configuration file in %s/%s.json",
+				viper.GetString("config-dir"),
+				viper.GetString("profile"))
 		}
 		log.Printf("Error reading configuration file.")
-		log.Printf("Fatal error reading config: %s \n", err)
-		os.Exit(1)
+		log.Fatalf("Fatal error reading config: %s\n", err)
 	}
 
 	var tarables []tarable.Tarable
