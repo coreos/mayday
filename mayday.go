@@ -17,6 +17,8 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+
+	"strings"
 )
 
 const (
@@ -77,6 +79,14 @@ func main() {
 
 	err := viper.ReadInConfig()
 	if err != nil {
+		// viper returns an `unsupported config type ""` error if it can't find a file
+		// https://github.com/spf13/viper/issues/210
+		if strings.HasSuffix(err.Error(), `Type ""`) {
+			log.Printf("Could not find configuration file in /etc/mayday/config.json " +
+				"or in working directory.")
+			os.Exit(1)
+		}
+		log.Printf("Error reading configuration file.")
 		log.Printf("Fatal error reading config: %s \n", err)
 		os.Exit(1)
 	}
