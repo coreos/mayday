@@ -125,7 +125,7 @@ func main() {
 		panic(err)
 	}
 	defer tarfile.Close()
-	t.Init(tarfile)
+	t.Init(tarfile, now)
 
 	mayday.Run(t, tarables)
 	t.Close()

@@ -33,7 +33,7 @@ func (tt *TestTarable) Link() string { return "" }
 func TestContentsAdded(t *testing.T) {
 	buf := new(bytes.Buffer)
 	var tf mayday.Tar
-	tf.Init(buf)
+	tf.Init(buf, "basepath")
 
 	var testtar *TestTarable
 
@@ -63,7 +63,7 @@ func TestContentsAdded(t *testing.T) {
 func TestLinkAdded(t *testing.T) {
 	buf := new(bytes.Buffer)
 	var tf mayday.Tar
-	tf.Init(buf)
+	tf.Init(buf, "basepath")
 
 	tf.MaybeMakeLink("short_path", "annoyingly/long/nested/path")
 	tf.Close()
@@ -84,7 +84,7 @@ func TestLinkAdded(t *testing.T) {
 			panic(err)
 		}
 		assert.Equal(t, int(hdr.Typeflag), int(tar.TypeSymlink))
-		assert.Equal(t, hdr.Name, "short_path")
+		assert.Equal(t, hdr.Name, "basepath/short_path")
 		assert.Equal(t, hdr.Linkname, "annoyingly/long/nested/path")
 	}
 
