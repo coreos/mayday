@@ -2,7 +2,6 @@ package tar
 
 import (
 	"archive/tar"
-	"bytes"
 	"compress/gzip"
 	"fmt"
 	"github.com/coreos/mayday/mayday/tarable"
@@ -28,16 +27,7 @@ func (t *Tar) Init(w io.Writer, subdir string) error {
 func (t *Tar) Add(tb tarable.Tarable) error {
 	var err error
 
-	// virtual files, like those in /proc, report a size of 0 to stat().
-	// this means the header in the tarfile reports a size of 0 for the file.
-	// to avoid this, we copy the file into a buffer, and use that to get the
-	// number of bytes to copy.
-
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(tb.Content())
-
 	header := tb.Header()
-	header.Size = int64(buf.Len())
 	header.Name = t.subdir + "/" + strings.TrimPrefix(header.Name, "/")
 
 	if err = t.tw.WriteHeader(header); err != nil {
@@ -45,7 +35,7 @@ func (t *Tar) Add(tb tarable.Tarable) error {
 		return err
 	}
 
-	_, err = io.Copy(t.tw, buf)
+	_, err = io.Copy(t.tw, tb.Content())
 
 	if err != nil {
 		return fmt.Errorf("could not copy file: %v", err)

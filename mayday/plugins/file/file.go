@@ -36,6 +36,7 @@ func (f MaydayFile) Header() *tar.Header {
 	if f.content == nil {
 		f.Content()
 	}
+	f.header.Size = int64(f.content.Len())
 	return f.header
 }
 

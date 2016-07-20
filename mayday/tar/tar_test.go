@@ -22,6 +22,7 @@ func (tt *TestTarable) Header() *tar.Header {
 	var h tar.Header
 	h.Typeflag = tar.TypeReg
 	h.Name = "test"
+	h.Size = int64(tt.Content().Len())
 	return &h
 }
 
