@@ -18,10 +18,12 @@ if [[ $* == *--coverprofile* ]]; then
 	mkdir -p tmp/
 	go test github.com/coreos/mayday/mayday -coverprofile tmp/mayday.out
 	go test github.com/coreos/mayday/mayday/rkt -coverprofile tmp/rkt.out
+	go test github.com/coreos/mayday/mayday/docker -coverprofile tmp/docker.out
 	go test github.com/coreos/mayday -coverprofile tmp/main.out
 	go tool cover -html=tmp/mayday.out -o tmp/mayday.html
 	go tool cover -html=tmp/main.out -o tmp/main.html
 	go tool cover -html=tmp/rkt.out -o tmp/rkt.html
+	go tool cover -html=tmp/docker.out -o tmp/docker.html
 else
 	# just report percentage
 	go test github.com/coreos/mayday github.com/coreos/mayday/mayday/... -cover

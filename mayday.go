@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/coreos/mayday/mayday"
+	"github.com/coreos/mayday/mayday/docker"
 	"github.com/coreos/mayday/mayday/rkt"
 
 	"github.com/spf13/pflag"
@@ -84,9 +85,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	pods, logs, err := rkt.GetPods()
+	pods, rktLogs, err := rkt.GetPods()
 	if err != nil {
 		log.Println("Could not connect to rkt. Verify mayday has permissions to launch the rkt client.")
+		log.Printf("Connection error: %s", err)
+	}
+
+	containers, dockerLogs, err := docker.GetContainers()
+	if err != nil {
+		log.Println("Could not connect to docker. Verify mayday has permissions to read /var/lib/docker.")
 		log.Printf("Connection error: %s", err)
 	}
 
@@ -111,7 +118,15 @@ func main() {
 		tarables = append(tarables, p)
 	}
 
-	for _, l := range logs {
+	for _, l := range rktLogs {
+		tarables = append(tarables, l)
+	}
+
+	for _, c := range containers {
+		tarables = append(tarables, c)
+	}
+
+	for _, l := range dockerLogs {
 		tarables = append(tarables, l)
 	}
 
