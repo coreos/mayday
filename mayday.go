@@ -44,7 +44,6 @@ func openFile(f File) (*file.MaydayFile, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer content.Close()
 
 	fi, err := os.Stat(f.Name)
 	if err != nil {
@@ -107,6 +106,7 @@ func main() {
 		if err != nil {
 			log.Printf("error opening %s: %s\n", f.Name, err)
 		} else {
+			defer mf.Close()
 			tarables = append(tarables, mf)
 		}
 	}
