@@ -10,9 +10,11 @@ import (
 )
 
 const (
-	dcString      = `{"Config": {"Safe": "abc", "Env": [1, 2, 3]}}`
-	dcStringNoEnv = `{"Config": {"Safe": "abc"}}` // same as dcString but with env vars deleted
-	dcUuid        = "do-re-mi-abc-123"
+	dcString            = `{"Config": {"Safe": "abc", "Env": ["POSTGRES_PASSWORD=mysecretpassword", "FOO=bar"]}}`
+	dcStringScrubbedEnv = `{"Config": {"Safe": "abc", "Env": [
+			"POSTGRES_PASSWORD=scrubbed by mayday",
+			"FOO=scrubbed by mayday"]}}`
+	dcUuid = "do-re-mi-abc-123"
 )
 
 func TestStruct(t *testing.T) {
@@ -28,10 +30,6 @@ func TestHeader(t *testing.T) {
 	dc := New(strings.NewReader(dcString), dcUuid)
 	h := dc.Header()
 
-	// the resultant string might have different whitespace and thus be larger,
-	// but it won't be larger than the string containing the env information.
-	assert.True(t, int(h.Size) > len(dcStringNoEnv))
-	assert.True(t, int(h.Size) < len(dcString))
 	assert.Equal(t, h.Name, "/docker/"+dcUuid)
 }
 
@@ -81,19 +79,16 @@ func TestContentSafeMode(t *testing.T) {
 	c := dc.Content()
 
 	var cParsed interface{}
-	var dcParsed map[string]interface{}
+	var dcParsed interface{}
 
 	cbytes, _ := ioutil.ReadAll(c)
+	dcbytes := []byte(dcStringScrubbedEnv)
 
 	json.Unmarshal(cbytes, &cParsed)
-	// after passing through dc.Content(), the env variables should be deleted
+	// after passing through dc.Content(), the env variables should be scrubbed
 	// (as the --danger flag has not been set)
-	json.Unmarshal([]byte(dcStringNoEnv), &dcParsed)
-
+	json.Unmarshal(dcbytes, &dcParsed)
 	assert.Equal(t, cParsed, dcParsed)
-	config := cParsed.(map[string]interface{})["Config"]
-	_, keyInMap := config.(map[string]interface{})["Env"]
-	assert.False(t, keyInMap)
 }
 
 func TestContentDangerMode(t *testing.T) {
@@ -106,7 +101,7 @@ func TestContentDangerMode(t *testing.T) {
 	var dcParsed map[string]interface{}
 
 	json.NewDecoder(c).Decode(cParsed)
-	// after passing through dc.Content(), the env variables should NOT be deleted
+	// after passing through dc.Content(), the env variables should NOT be scrubbed
 	// (as the --danger flag has been set)
 	json.Unmarshal([]byte(dcString), dcParsed)
 

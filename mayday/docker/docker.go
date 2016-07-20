@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -49,8 +50,14 @@ func (d *DockerContainer) Content() io.Reader {
 	configInterface := config.(map[string]interface{})
 
 	if !viper.GetBool("danger") {
-		configConfig := configInterface["Config"].(map[string]interface{})
-		delete(configConfig, "Env")
+		configMap := configInterface["Config"].(map[string]interface{})
+		env := configMap["Env"].([]interface{})
+		var newEnv []string
+		for _, e := range env {
+			varSplit := strings.SplitAfterN(e.(string), "=", 2)
+			newEnv = append(newEnv, varSplit[0]+"scrubbed by mayday")
+		}
+		configMap["Env"] = newEnv
 	}
 
 	byteContent, err := json.MarshalIndent(configInterface, "", "  ")
