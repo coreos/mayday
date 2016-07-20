@@ -3,7 +3,7 @@ package rkt
 import (
 	"bytes"
 	"errors"
-	"github.com/coreos/mayday/mayday/rkt/v1alpha"
+	"github.com/coreos/mayday/mayday/plugins/rkt/v1alpha"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -12,10 +12,10 @@ func TestTarable(t *testing.T) {
 	grpcpod := v1alpha.Pod{Id: "abc123"}
 	p := Pod{Pod: &grpcpod}
 
-	assert.Equal(t, p.Header().Name, "rkt/abc123")
-
 	content := new(bytes.Buffer)
 	content.ReadFrom(p.Content())
+
+	assert.Equal(t, p.Header().Name, "rkt/abc123")
 	assert.Contains(t, content.String(), "abc123")
 
 }

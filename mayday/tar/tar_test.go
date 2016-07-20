@@ -1,4 +1,4 @@
-package mayday_test
+package tar
 
 import (
 	"archive/tar"
@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/coreos/mayday/mayday"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,7 +31,7 @@ func (tt *TestTarable) Link() string { return "" }
 
 func TestContentsAdded(t *testing.T) {
 	buf := new(bytes.Buffer)
-	var tf mayday.Tar
+	var tf Tar
 	tf.Init(buf, "basepath")
 
 	var testtar *TestTarable
@@ -62,7 +61,7 @@ func TestContentsAdded(t *testing.T) {
 
 func TestLinkAdded(t *testing.T) {
 	buf := new(bytes.Buffer)
-	var tf mayday.Tar
+	var tf Tar
 	tf.Init(buf, "basepath")
 
 	tf.MaybeMakeLink("short_path", "annoyingly/long/nested/path")

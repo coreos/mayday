@@ -4,7 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"encoding/json"
-	"github.com/coreos/mayday/mayday"
+	"github.com/coreos/mayday/mayday/plugins/command"
 	"github.com/spf13/viper"
 	"io"
 	"io/ioutil"
@@ -91,14 +91,14 @@ func (d *DockerContainer) Link() string {
 	return d.link
 }
 
-func getLogs(containers []*DockerContainer) []*mayday.Command {
-	var logs []*mayday.Command
+func getLogs(containers []*DockerContainer) []*command.Command {
+	var logs []*command.Command
 	if viper.GetBool("danger") {
 		log.Println("Danger mode activated. Dump will include docker container logs and environment variables, which may contain sensitive information.")
 		if len(containers) != 0 {
 			for _, c := range containers {
 				logcmd := []string{"docker", "logs", c.Name()}
-				cmd := mayday.NewCommand(logcmd, "")
+				cmd := command.New(logcmd, "")
 				cmd.Output = "/docker/" + c.Name() + ".log"
 				logs = append(logs, cmd)
 			}
@@ -107,9 +107,9 @@ func getLogs(containers []*DockerContainer) []*mayday.Command {
 	return logs
 }
 
-func GetContainers() ([]*DockerContainer, []*mayday.Command, error) {
+func GetContainers() ([]*DockerContainer, []*command.Command, error) {
 	var containers []*DockerContainer
-	var logs []*mayday.Command
+	var logs []*command.Command
 
 	files, err := ioutil.ReadDir(dockerDir)
 	if err != nil {

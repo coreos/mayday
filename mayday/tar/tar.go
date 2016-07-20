@@ -1,22 +1,16 @@
-package mayday
+package tar
 
 import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
 	"fmt"
+	"github.com/coreos/mayday/mayday/tarable"
 	"io"
 	"log"
 	"strings"
 	"time"
 )
-
-type Tarable interface {
-	Content() io.Reader
-	Header() *tar.Header
-	Name() string // full path of file in archive
-	Link() string // short link to file in archive
-}
 
 type Tar struct {
 	gzw    *gzip.Writer
@@ -31,7 +25,8 @@ func (t *Tar) Init(w io.Writer, subdir string) error {
 	return nil
 }
 
-func (t *Tar) Add(tb Tarable) error {
+func (t *Tar) Add(tb tarable.Tarable) error {
+	var err error
 
 	// virtual files, like those in /proc, report a size of 0 to stat().
 	// this means the header in the tarfile reports a size of 0 for the file.
@@ -40,13 +35,13 @@ func (t *Tar) Add(tb Tarable) error {
 
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(tb.Content())
+
 	header := tb.Header()
 	header.Size = int64(buf.Len())
 	header.Name = t.subdir + "/" + strings.TrimPrefix(header.Name, "/")
 
-	var err error
-
 	if err = t.tw.WriteHeader(header); err != nil {
+		log.Printf("error writing header: %s", err)
 		return err
 	}
 
