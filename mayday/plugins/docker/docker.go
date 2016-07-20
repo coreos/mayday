@@ -30,7 +30,7 @@ func New(f io.Reader, uuid string) DockerContainer {
 	return dc
 }
 
-func (d *DockerContainer) Content() io.Reader {
+func (d *DockerContainer) Content() *bytes.Buffer {
 	if d.content != nil {
 		return d.content
 	}

@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/coreos/mayday/mayday/tarable"
-	"io"
 	"log"
 	"os/exec"
 	"strings"
@@ -41,7 +40,7 @@ func (c *Command) Args() []string {
 	return c.args
 }
 
-func (c *Command) Content() io.Reader {
+func (c *Command) Content() *bytes.Buffer {
 	if c.content == nil {
 		c.Run()
 	}

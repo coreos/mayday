@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/coreos/go-systemd/dbus"
 	"github.com/coreos/mayday/mayday/tarable"
-	"io"
 	"log"
 	"os/exec"
 	"regexp"
@@ -69,7 +68,7 @@ func List() ([]*SystemdJournal, error) {
 	return svcs, nil
 }
 
-func (j *SystemdJournal) Content() io.Reader {
+func (j *SystemdJournal) Content() *bytes.Buffer {
 	if j.content == nil {
 		j.Run()
 	}

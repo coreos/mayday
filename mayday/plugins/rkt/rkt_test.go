@@ -12,12 +12,12 @@ func TestTarable(t *testing.T) {
 	grpcpod := v1alpha.Pod{Id: "abc123"}
 	p := Pod{Pod: &grpcpod}
 
+	assert.Equal(t, p.Header().Name, "rkt/abc123")
+
 	content := new(bytes.Buffer)
 	content.ReadFrom(p.Content())
 
-	assert.Equal(t, p.Header().Name, "rkt/abc123")
 	assert.Contains(t, content.String(), "abc123")
-
 }
 
 func TestGracefulFail(t *testing.T) {

@@ -4,7 +4,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"errors"
-	"io"
 
 	"github.com/coreos/mayday/mayday/plugins/command"
 	"github.com/coreos/mayday/mayday/plugins/rkt/v1alpha"
@@ -33,7 +32,7 @@ type Pod struct {
 	link    string
 }
 
-func (p *Pod) Content() io.Reader {
+func (p *Pod) Content() *bytes.Buffer {
 	if p.content == nil {
 		marshalled, _ := yaml.Marshal(&p.Pod)
 		p.content = bytes.NewBuffer(marshalled)

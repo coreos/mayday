@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,8 +14,8 @@ type TestTarable struct{}
 
 func (tt *TestTarable) Run() error { return nil }
 
-func (tt *TestTarable) Content() io.Reader {
-	return strings.NewReader("test_content")
+func (tt *TestTarable) Content() *bytes.Buffer {
+	return bytes.NewBufferString("test_content")
 }
 
 func (tt *TestTarable) Header() *tar.Header {
