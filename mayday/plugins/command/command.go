@@ -1,11 +1,11 @@
-package mayday
+package command
 
 import (
 	"archive/tar"
 	"bufio"
 	"bytes"
 	"fmt"
-	"io"
+	"github.com/coreos/mayday/mayday/tarable"
 	"log"
 	"os/exec"
 	"strings"
@@ -24,8 +24,8 @@ type Command struct {
 	Output  string        // name of command output file
 }
 
-func NewCommand(args []string, link string) *Command {
-	c := new(Command)
+func New(args []string, link string) *Command {
+	c := &Command{}
 	c.args = args
 	c.link = link
 	c.Output = "/mayday_commands/" + strings.Join(c.args, "_")
@@ -40,21 +40,7 @@ func (c *Command) Args() []string {
 	return c.args
 }
 
-func (c *Command) Header() *tar.Header {
-	// content needs to be populated before the header can be generated
-	if c.content == nil {
-		c.Run()
-	}
-	var header tar.Header
-	header.Name = c.Name()
-	header.Size = int64(c.content.Len())
-	header.Mode = 0666
-	header.ModTime = time.Now()
-
-	return &header
-}
-
-func (c *Command) Content() io.Reader {
+func (c *Command) Content() *bytes.Buffer {
 	if c.content == nil {
 		c.Run()
 	}
@@ -63,6 +49,10 @@ func (c *Command) Content() io.Reader {
 
 func (c *Command) Link() string {
 	return c.link
+}
+
+func (c *Command) Header() *tar.Header {
+	return tarable.Header(c.Content(), c.Name())
 }
 
 // Run runs the command, saving output to a Reader

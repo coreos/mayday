@@ -7,8 +7,13 @@ import (
 	"time"
 
 	"github.com/coreos/mayday/mayday"
-	"github.com/coreos/mayday/mayday/docker"
-	"github.com/coreos/mayday/mayday/rkt"
+	"github.com/coreos/mayday/mayday/plugins/command"
+	"github.com/coreos/mayday/mayday/plugins/docker"
+	"github.com/coreos/mayday/mayday/plugins/file"
+	"github.com/coreos/mayday/mayday/plugins/journal"
+	"github.com/coreos/mayday/mayday/plugins/rkt"
+	mtar "github.com/coreos/mayday/mayday/tar"
+	"github.com/coreos/mayday/mayday/tarable"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -34,7 +39,7 @@ type Command struct {
 	Link string   `mapstructure:"link"`
 }
 
-func openFile(f File) (*mayday.MaydayFile, error) {
+func openFile(f File) (*file.MaydayFile, error) {
 	content, err := os.Open(f.Name)
 	if err != nil {
 		return nil, err
@@ -52,8 +57,8 @@ func openFile(f File) (*mayday.MaydayFile, error) {
 		return nil, err
 	}
 
-	opened := mayday.NewFile(content, header, f.Name, f.Link)
-	return &opened, nil
+	opened := file.New(content, header, f.Name, f.Link)
+	return opened, nil
 }
 
 func main() {
@@ -73,14 +78,14 @@ func main() {
 	// cli arg takes precendence over anything in config files
 	pflag.Parse()
 
-	var tarables []mayday.Tarable
+	var tarables []tarable.Tarable
 
 	var C Config
 
 	// fill C with configuration data
 	viper.Unmarshal(&C)
 
-	journals, err := mayday.ListJournals()
+	journals, err := journal.List()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -107,7 +112,7 @@ func main() {
 	}
 
 	for _, c := range C.Commands {
-		tarables = append(tarables, mayday.NewCommand(c.Args, c.Link))
+		tarables = append(tarables, command.New(c.Args, c.Link))
 	}
 
 	for _, j := range journals {
@@ -133,7 +138,7 @@ func main() {
 	now := time.Now().Format("200601021504.999999999")
 	ws := os.TempDir() + dirPrefix + now
 
-	var t mayday.Tar
+	var t mtar.Tar
 	outputFile := ws + ".tar.gz"
 	tarfile, err := os.Create(outputFile)
 	if err != nil {

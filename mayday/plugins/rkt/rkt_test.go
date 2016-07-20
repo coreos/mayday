@@ -3,7 +3,7 @@ package rkt
 import (
 	"bytes"
 	"errors"
-	"github.com/coreos/mayday/mayday/rkt/v1alpha"
+	"github.com/coreos/mayday/mayday/plugins/rkt/v1alpha"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -16,8 +16,8 @@ func TestTarable(t *testing.T) {
 
 	content := new(bytes.Buffer)
 	content.ReadFrom(p.Content())
-	assert.Contains(t, content.String(), "abc123")
 
+	assert.Contains(t, content.String(), "abc123")
 }
 
 func TestGracefulFail(t *testing.T) {

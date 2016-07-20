@@ -1,8 +1,11 @@
 package mayday
 
-import ()
+import (
+	"github.com/coreos/mayday/mayday/tar"
+	"github.com/coreos/mayday/mayday/tarable"
+)
 
-func Run(t Tar, tarables []Tarable) error {
+func Run(t tar.Tar, tarables []tarable.Tarable) error {
 
 	for _, tb := range tarables {
 		t.Add(tb)

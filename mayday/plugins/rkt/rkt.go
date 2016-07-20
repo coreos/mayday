@@ -4,10 +4,10 @@ import (
 	"archive/tar"
 	"bytes"
 	"errors"
-	"io"
 
-	"github.com/coreos/mayday/mayday"
-	"github.com/coreos/mayday/mayday/rkt/v1alpha"
+	"github.com/coreos/mayday/mayday/plugins/command"
+	"github.com/coreos/mayday/mayday/plugins/rkt/v1alpha"
+	"github.com/coreos/mayday/mayday/tarable"
 	"github.com/spf13/viper"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -32,30 +32,22 @@ type Pod struct {
 	link    string
 }
 
-func (p *Pod) Content() io.Reader {
+func (p *Pod) Content() *bytes.Buffer {
 	if p.content == nil {
 		marshalled, _ := yaml.Marshal(&p.Pod)
 		p.content = bytes.NewBuffer(marshalled)
 		log.Printf("collecting pod data: %s\n", p.Id)
 	}
+
 	return p.content
 }
 
-func (p *Pod) Header() *tar.Header {
-	if p.content == nil {
-		p.Content() // set Pod content to marshalled struct
-	}
-	var header tar.Header
-	header.Name = "rkt/" + p.Id
-	header.Size = int64(p.content.Len())
-	header.Mode = 0666
-	header.ModTime = time.Now()
-
-	return &header
+func (p *Pod) Name() string {
+	return "rkt/" + p.Id
 }
 
-func (p *Pod) Name() string {
-	return p.Id
+func (p *Pod) Header() *tar.Header {
+	return tarable.Header(p.Content(), p.Name())
 }
 
 func (p *Pod) Link() string {
@@ -116,9 +108,9 @@ var podsFromApi = func() ([]*v1alpha.Pod, error) {
 	return podResp.Pods, err
 }
 
-func GetPods() ([]*Pod, []*mayday.Command, error) {
+func GetPods() ([]*Pod, []*command.Command, error) {
 	var pods []*Pod
-	var logs []*mayday.Command
+	var logs []*command.Command
 
 	err := startApi()
 	if err != nil {
@@ -141,7 +133,7 @@ func GetPods() ([]*Pod, []*mayday.Command, error) {
 			for _, p := range pods {
 				if p.State == v1alpha.PodState_POD_STATE_RUNNING {
 					logcmd := []string{"journalctl", "-M", "rkt-" + p.Id}
-					cmd := mayday.NewCommand(logcmd, "")
+					cmd := command.New(logcmd, "")
 					cmd.Output = "/rkt/" + p.Id + ".log"
 					logs = append(logs, cmd)
 				}

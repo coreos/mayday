@@ -1,4 +1,4 @@
-package mayday
+package command
 
 import (
 	"bytes"
@@ -8,13 +8,13 @@ import (
 )
 
 func TestNonexistentCommand(t *testing.T) {
-	cmd := NewCommand([]string{"nonexistent"}, "")
+	cmd := New([]string{"nonexistent"}, "")
 	err := cmd.Run()
 	assert.Equal(t, err.Error(), `could not find "nonexistent" in PATH`)
 }
 
 func TestCommand(t *testing.T) {
-	cmd := NewCommand([]string{"df"}, "")
+	cmd := New([]string{"df"}, "")
 	err := cmd.Run()
 
 	assert.Nil(t, err)
@@ -25,7 +25,7 @@ func TestCommand(t *testing.T) {
 }
 
 func TestCommandWithArgs(t *testing.T) {
-	cmd := NewCommand([]string{"echo", "hello"}, "")
+	cmd := New([]string{"echo", "hello"}, "")
 
 	err := cmd.Run()
 	assert.Nil(t, err)
@@ -36,7 +36,7 @@ func TestCommandWithArgs(t *testing.T) {
 }
 
 func TestCommandHeader(t *testing.T) {
-	cmd := NewCommand([]string{"echo", "-e", "hello", "world", "testing"}, "")
+	cmd := New([]string{"echo", "-e", "hello", "world", "testing"}, "")
 	assert.Equal(t, cmd.Name(), "/mayday_commands/echo_-e_hello_world_testing")
 
 	cmd.Run() // cmd.Content needs to be populated for header()
