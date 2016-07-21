@@ -3,9 +3,10 @@ package rkt
 import (
 	"bytes"
 	"errors"
+	"testing"
+
 	"github.com/coreos/mayday/mayday/plugins/rkt/v1alpha"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestTarable(t *testing.T) {

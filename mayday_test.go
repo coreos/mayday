@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
+
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
 const (

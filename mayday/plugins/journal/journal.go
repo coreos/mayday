@@ -5,11 +5,12 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/coreos/go-systemd/dbus"
-	"github.com/coreos/mayday/mayday/tarable"
 	"log"
 	"os/exec"
 	"regexp"
+
+	"github.com/coreos/go-systemd/dbus"
+	"github.com/coreos/mayday/mayday/tarable"
 )
 
 type SystemdJournal struct {

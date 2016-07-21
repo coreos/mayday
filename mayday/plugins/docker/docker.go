@@ -4,14 +4,15 @@ import (
 	"archive/tar"
 	"bytes"
 	"encoding/json"
-	"github.com/coreos/mayday/mayday/plugins/command"
-	"github.com/spf13/viper"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/coreos/mayday/mayday/plugins/command"
+	"github.com/spf13/viper"
 )
 
 const (
