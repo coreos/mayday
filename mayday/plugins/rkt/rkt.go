@@ -108,6 +108,25 @@ var podsFromApi = func() ([]*v1alpha.Pod, error) {
 	return podResp.Pods, err
 }
 
+func getLogs(pods []*Pod) []*command.Command {
+	var logs []*command.Command
+	if viper.GetBool("danger") {
+		log.Println("Danger mode activated. Dump will include rkt pod logs, which may contain sensitive information.")
+
+		if len(pods) != 0 {
+			for _, p := range pods {
+				if p.State == v1alpha.PodState_POD_STATE_RUNNING {
+					logcmd := []string{"journalctl", "-M", "rkt-" + p.Id}
+					cmd := command.New(logcmd, "")
+					cmd.Output = "/rkt/" + p.Id + ".log"
+					logs = append(logs, cmd)
+				}
+			}
+		}
+	}
+	return logs
+}
+
 func GetPods() ([]*Pod, []*command.Command, error) {
 	var pods []*Pod
 	var logs []*command.Command
@@ -127,19 +146,6 @@ func GetPods() ([]*Pod, []*command.Command, error) {
 		pods = append(pods, &Pod{Pod: p})
 	}
 
-	if viper.GetBool("danger") {
-		log.Println("Danger mode activated. Dump will include rkt pod logs, which may contain sensitive information.")
-		if len(pods) != 0 {
-			for _, p := range pods {
-				if p.State == v1alpha.PodState_POD_STATE_RUNNING {
-					logcmd := []string{"journalctl", "-M", "rkt-" + p.Id}
-					cmd := command.New(logcmd, "")
-					cmd.Output = "/rkt/" + p.Id + ".log"
-					logs = append(logs, cmd)
-				}
-			}
-		}
-	}
-
+	logs = getLogs(pods)
 	return pods, logs, nil
 }
