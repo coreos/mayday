@@ -2,10 +2,11 @@ package journal
 
 import (
 	"bytes"
+	"testing"
+
 	"github.com/coreos/go-systemd/dbus"
 	godbus "github.com/godbus/dbus"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestJournalHeader(t *testing.T) {

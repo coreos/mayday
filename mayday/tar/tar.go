@@ -4,11 +4,12 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"fmt"
-	"github.com/coreos/mayday/mayday/tarable"
 	"io"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/coreos/mayday/mayday/tarable"
 )
 
 type Tar struct {

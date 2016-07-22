@@ -5,11 +5,12 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/coreos/mayday/mayday/tarable"
 	"log"
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/coreos/mayday/mayday/tarable"
 )
 
 const (
