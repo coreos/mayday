@@ -13,17 +13,21 @@ source ./build
 
 echo "Running tests..."
 
-if [[ $* == *--coverprofile* ]]; then
+if [[ $* == *--cover* ]]; then
 	# generate html cover document
 	mkdir -p tmp/
-	go test github.com/coreos/mayday/mayday -coverprofile tmp/mayday.out
-	go test github.com/coreos/mayday/mayday/rkt -coverprofile tmp/rkt.out
-	go test github.com/coreos/mayday/mayday/docker -coverprofile tmp/docker.out
 	go test github.com/coreos/mayday -coverprofile tmp/main.out
+	go test github.com/coreos/mayday/mayday -coverprofile tmp/mayday.out
 	go tool cover -html=tmp/mayday.out -o tmp/mayday.html
 	go tool cover -html=tmp/main.out -o tmp/main.html
-	go tool cover -html=tmp/rkt.out -o tmp/rkt.html
-	go tool cover -html=tmp/docker.out -o tmp/docker.html
+
+	for PLUGIN in "command" "docker" "file" "journal" "rkt"
+	do
+		go test github.com/coreos/mayday/mayday/plugins/$PLUGIN -coverprofile tmp/$PLUGIN.out
+		go tool cover -html=tmp/$PLUGIN.out -o tmp/$PLUGIN.html
+	done
+
+	rm -rf tmp/*.out
 else
 	# just report percentage
 	go test github.com/coreos/mayday github.com/coreos/mayday/mayday/... -cover
