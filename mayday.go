@@ -62,20 +62,21 @@ func openFile(f File) (*file.MaydayFile, error) {
 
 func main() {
 	pflag.BoolP("danger", "d", false, "collect potentially sensitive information (ex, container logs)")
+	pflag.StringP("profile", "p", "default", `set of data to be collected. default: "everything"`)
 
-	viper.SetConfigName("config")
+	// binds cli flag "danger" to viper config danger
+	viper.BindPFlag("danger", pflag.Lookup("danger"))
+
+	pflag.Parse()
+	viper.SetConfigName(pflag.Lookup("profile").Value.String())
 	viper.AddConfigPath("/etc/mayday")
 	viper.AddConfigPath(".")
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Fatal("Fatal error reading config: %s \n", err)
+		log.Printf("Fatal error reading config: %s \n", err)
+		os.Exit(1)
 	}
-
-	// binds cli flag "danger" to viper config danger
-	viper.BindPFlag("danger", pflag.Lookup("danger"))
-	// cli arg takes precendence over anything in config files
-	pflag.Parse()
 
 	var tarables []tarable.Tarable
 
