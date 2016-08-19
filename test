@@ -13,22 +13,36 @@ source ./build
 
 echo "Running tests..."
 
-if [[ $* == *--coverprofile* ]]; then
+if [[ $* == *--cover* ]]; then
 	# generate html cover document
 	mkdir -p tmp/
-	go test github.com/coreos/mayday/mayday -coverprofile tmp/mayday.out
-	go test github.com/coreos/mayday/mayday/rkt -coverprofile tmp/rkt.out
 	go test github.com/coreos/mayday -coverprofile tmp/main.out
+	go test github.com/coreos/mayday/mayday -coverprofile tmp/mayday.out
 	go tool cover -html=tmp/mayday.out -o tmp/mayday.html
 	go tool cover -html=tmp/main.out -o tmp/main.html
-	go tool cover -html=tmp/rkt.out -o tmp/rkt.html
+
+	for PLUGIN in "command" "docker" "file" "journal" "rkt"
+	do
+		go test github.com/coreos/mayday/mayday/plugins/$PLUGIN -coverprofile tmp/$PLUGIN.out
+		go tool cover -html=tmp/$PLUGIN.out -o tmp/$PLUGIN.html
+	done
+
+	rm -rf tmp/*.out
 else
 	# just report percentage
 	go test github.com/coreos/mayday github.com/coreos/mayday/mayday/... -cover
 fi
 
 echo "Checking gofmt..."
-fmtRes=$(gofmt -l $(find * -type f -name '*.go' -not -path "vendor/*"))
+
+GOFMT=""
+if command -v goimports; then
+    GOFMT=goimports
+else
+    GOFMT=gofmt
+fi
+
+fmtRes=$("$GOFMT" -l $(find * -type f -name '*.go' -not -path "vendor/*"))
 if [ -n "${fmtRes}" ]; then
 	echo -e "gofmt checking failed:\n${fmtRes}"
 	exit 255

@@ -1,1 +1,1 @@
-package mayday_test
+package mayday

@@ -3,9 +3,11 @@ package rkt
 import (
 	"bytes"
 	"errors"
-	"github.com/coreos/mayday/mayday/rkt/v1alpha"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/coreos/mayday/mayday/plugins/rkt/v1alpha"
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTarable(t *testing.T) {
@@ -16,8 +18,27 @@ func TestTarable(t *testing.T) {
 
 	content := new(bytes.Buffer)
 	content.ReadFrom(p.Content())
-	assert.Contains(t, content.String(), "abc123")
 
+	assert.Contains(t, content.String(), "abc123")
+}
+
+func TestGetLogs(t *testing.T) {
+	p1 := v1alpha.Pod{Id: "abc123", State: v1alpha.PodState_POD_STATE_RUNNING}
+	p2 := v1alpha.Pod{Id: "xyz789", State: v1alpha.PodState_POD_STATE_EXITED}
+
+	pods := []*Pod{{Pod: &p1}, {Pod: &p2}}
+
+	viper.Set("danger", true)
+	logs := getLogs(pods)
+	assert.Equal(t, len(logs), 1)
+	// log command is correct
+	assert.EqualValues(t, logs[0].Args(), []string{"journalctl", "-M", "rkt-abc123"})
+	// output will be to correct file
+	assert.Equal(t, logs[0].Name(), "/rkt/abc123.log")
+
+	viper.Set("danger", false)
+	logs1 := getLogs(pods)
+	assert.Equal(t, len(logs1), 0)
 }
 
 func TestGracefulFail(t *testing.T) {

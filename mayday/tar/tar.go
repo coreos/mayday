@@ -1,54 +1,42 @@
-package mayday
+package tar
 
 import (
 	"archive/tar"
-	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/coreos/mayday/mayday/tarable"
 )
 
-type Tarable interface {
-	Content() io.Reader
-	Header() *tar.Header
-	Name() string // full path of file in archive
-	Link() string // short link to file in archive
-}
-
 type Tar struct {
-	gzw *gzip.Writer
-	tw  *tar.Writer
+	gzw    *gzip.Writer
+	tw     *tar.Writer
+	subdir string // subdirectory to put files in to prevent polluting current directory
 }
 
-func (t *Tar) Init(w io.Writer) error {
+func (t *Tar) Init(w io.Writer, subdir string) error {
 	t.gzw = gzip.NewWriter(w)
 	t.tw = tar.NewWriter(t.gzw)
+	t.subdir = subdir
 	return nil
 }
 
-func (t *Tar) Add(tb Tarable) error {
-
-	// virtual files, like those in /proc, report a size of 0 to stat().
-	// this means the header in the tarfile reports a size of 0 for the file.
-	// to avoid this, we copy the file into a buffer, and use that to get the
-	// number of bytes to copy.
-
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(tb.Content())
-	header := tb.Header()
-	header.Size = int64(buf.Len())
-	header.Name = strings.TrimPrefix(header.Name, "/")
-
+func (t *Tar) Add(tb tarable.Tarable) error {
 	var err error
 
+	header := tb.Header()
+	header.Name = t.subdir + "/" + strings.TrimPrefix(header.Name, "/")
+
 	if err = t.tw.WriteHeader(header); err != nil {
+		log.Printf("error writing header: %s", err)
 		return err
 	}
 
-	_, err = io.Copy(t.tw, buf)
+	_, err = io.Copy(t.tw, tb.Content())
 
 	if err != nil {
 		return fmt.Errorf("could not copy file: %v", err)
@@ -62,7 +50,8 @@ func (t *Tar) MaybeMakeLink(src string, dst string) error {
 	}
 
 	var header tar.Header
-	header.Name = src
+	header.Name = t.subdir + "/" + src
+	// relative path from location of link, already inside t.subdir
 	header.Linkname = strings.TrimPrefix(dst, "/")
 	header.Typeflag = tar.TypeSymlink
 	header.ModTime = time.Now()

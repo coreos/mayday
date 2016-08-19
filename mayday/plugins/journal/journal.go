@@ -1,16 +1,16 @@
-package mayday
+package journal
 
 import (
 	"archive/tar"
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/coreos/go-systemd/dbus"
-	"io"
 	"log"
 	"os/exec"
 	"regexp"
-	"time"
+
+	"github.com/coreos/go-systemd/dbus"
+	"github.com/coreos/mayday/mayday/tarable"
 )
 
 type SystemdJournal struct {
@@ -48,7 +48,7 @@ var getJournals = func() ([]dbusStatus, error) {
 	return statuses, nil
 }
 
-func ListJournals() ([]*SystemdJournal, error) {
+func List() ([]*SystemdJournal, error) {
 	var svcs []*SystemdJournal
 
 	statuses, err := getJournals()
@@ -69,21 +69,7 @@ func ListJournals() ([]*SystemdJournal, error) {
 	return svcs, nil
 }
 
-func (j *SystemdJournal) Header() *tar.Header {
-	// content needs to be populated before the header can be generated
-	if j.content == nil {
-		j.Run()
-	}
-	var header tar.Header
-	header.Name = "/journals/" + j.name + ".log"
-	header.Mode = 0666
-	header.Size = int64(j.content.Len())
-	header.ModTime = time.Now()
-
-	return &header
-}
-
-func (j *SystemdJournal) Content() io.Reader {
+func (j *SystemdJournal) Content() *bytes.Buffer {
 	if j.content == nil {
 		j.Run()
 	}
@@ -91,7 +77,11 @@ func (j *SystemdJournal) Content() io.Reader {
 }
 
 func (j *SystemdJournal) Name() string {
-	return j.name
+	return "/journals/" + j.name + ".log"
+}
+
+func (j *SystemdJournal) Header() *tar.Header {
+	return tarable.Header(j.Content(), j.Name())
 }
 
 func (j *SystemdJournal) Link() string {

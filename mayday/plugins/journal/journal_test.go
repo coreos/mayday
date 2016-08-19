@@ -1,21 +1,22 @@
-package mayday
+package journal
 
 import (
 	"bytes"
+	"testing"
+
 	"github.com/coreos/go-systemd/dbus"
 	godbus "github.com/godbus/dbus"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestJournalHeader(t *testing.T) {
 	content := bytes.NewBufferString("testd daemon log")
 	jnl := SystemdJournal{name: "testd", content: content}
-	assert.Equal(t, jnl.Name(), "testd")
+	assert.Equal(t, jnl.Name(), "/journals/testd.log") // .Name() returns full path
 
 	hdr := jnl.Header() // header is generated from name and content
 	assert.Equal(t, hdr.Name, "/journals/testd.log")
-	assert.Equal(t, hdr.Size, int64(content.Len()))
+	assert.EqualValues(t, hdr.Size, len("testd daemon log"))
 }
 
 func TestListJournals(t *testing.T) {
@@ -39,9 +40,9 @@ func TestListJournals(t *testing.T) {
 		return statuses, nil
 	}
 
-	journals, err := ListJournals()
+	journals, err := List()
 	assert.Nil(t, err)
 	assert.Len(t, journals, 2)
-	assert.Equal(t, journals[0].Name(), "testd")
-	assert.Equal(t, journals[1].Name(), "examd")
+	assert.Equal(t, journals[0].Name(), "/journals/testd.log")
+	assert.Equal(t, journals[1].Name(), "/journals/examd.log")
 }
