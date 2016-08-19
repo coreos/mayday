@@ -1,62 +1,94 @@
 package mayday
 
 import (
+	"archive/tar"
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"log"
-	"os"
 	"os/exec"
-	"path"
 	"strings"
 	"time"
 )
 
 const (
-	OutputDir = "mayday_commands"
-
 	defaultTimeout = 30 * time.Second
 )
 
-// Command encapsulates a command (a list of arguments) to be run
+// command encapsulates a command (a list of arguments) to be run
 type Command struct {
-	Args []string // all of the arguments, e.g. ["free", "-m"]
-	Link string   // short name to link to the output (optional), e.g. "free"
+	args    []string      // all of the arguments, e.g. ["free", "-m"]
+	link    string        // short name to link to the output (optional), e.g. "free"
+	content *bytes.Buffer // the contents of the command, populated by Run()
+	Output  string        // name of command output file
 }
 
-func (c *Command) outputFile() string {
-	return strings.Join(c.Args, "_")
+func NewCommand(args []string, link string) *Command {
+	c := new(Command)
+	c.args = args
+	c.link = link
+	c.Output = "/mayday_commands/" + strings.Join(c.args, "_")
+	return c
 }
 
-// Run runs the command, saving output to the given workspace
-func (c *Command) Run(workspace string) error {
+func (c *Command) Name() string {
+	return c.Output
+}
+
+func (c *Command) Header() *tar.Header {
+	// content needs to be populated before the header can be generated
+	if c.content == nil {
+		c.Run()
+	}
+	var header tar.Header
+	header.Name = c.Name()
+	header.Size = int64(c.content.Len())
+	header.Mode = 0666
+	header.ModTime = time.Now()
+
+	return &header
+}
+
+func (c *Command) Content() io.Reader {
+	if c.content == nil {
+		c.Run()
+	}
+	return c.content
+}
+
+func (c *Command) Link() string {
+	return c.link
+}
+
+// Run runs the command, saving output to a Reader
+func (c *Command) Run() error {
+
+	var b bytes.Buffer
+	c.content = &b
+	writer := bufio.NewWriter(c.content)
+
 	// Sanitize provided arguments
-	if len(c.Args) < 1 {
+	if len(c.args) < 1 {
 		return fmt.Errorf("cannot run empty Command")
 	}
-	name := c.Args[0]
+	name := c.args[0]
 	p, err := exec.LookPath(name)
 	if err != nil {
 		return fmt.Errorf("could not find %q in PATH", name)
 	}
 
-	// Set up the output file
-	fn := path.Join(workspace, OutputDir, c.outputFile())
-	f, err := os.OpenFile(fn, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0600)
-	if err != nil {
-		return fmt.Errorf("error opening file for output: %v", err)
-	}
-
 	// Set up the actual Cmd to be run
 	cmd := exec.Cmd{
 		Path:   p,
-		Args:   c.Args,
-		Stdout: f,
+		Args:   c.args,
+		Stdout: writer,
 		// TODO(jonboulle): something with stderr?
 		// sosreport just appears to ignore it entirely.
 	}
 
 	// Launch the Cmd, and set up a timeout
-	log.Printf("Running Command: %q\n", strings.Join(cmd.Args, " "))
-	log.Printf("Saving output to %v\n", fn)
+	log.Printf("Running command: %q\n", strings.Join(cmd.Args, " "))
 	cmd.Start()
 	wc := make(chan error, 1)
 	go func() {
@@ -75,6 +107,5 @@ func (c *Command) Run(workspace string) error {
 	}
 	// If we get this far, the command succeeded. Huzzah!
 
-	// If necessary, create a symlink
-	return maybeCreateLink(c.Link, fn, workspace)
+	return nil
 }

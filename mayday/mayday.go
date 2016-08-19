@@ -1,20 +1,13 @@
 package mayday
 
-import (
-	"fmt"
-	"log"
-	"os"
-	"path"
-)
+import ()
 
-func maybeCreateLink(src, dst, workspace string) error {
-	if src == "" {
-		return nil
+func Run(t Tar, tarables []Tarable) error {
+
+	for _, tb := range tarables {
+		t.Add(tb)
+		t.MaybeMakeLink(tb.Link(), tb.Name())
 	}
-	lp := path.Join(workspace, src)
-	log.Printf("Creating link (%s -> %s)", lp, dst)
-	if err := os.Symlink(dst, lp); err != nil {
-		return fmt.Errorf("error creating link: %v", err)
-	}
+
 	return nil
 }

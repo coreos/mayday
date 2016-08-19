@@ -1,0 +1,89 @@
+hash: e6a39ef1b57c9d23b98e382b417a496b58a45ff9207e1317708edaf6094ba0d0
+updated: 2016-07-15T13:22:50.442643269-07:00
+imports:
+- name: github.com/BurntSushi/toml
+  version: bec2dacf4b590d26237cfebff4471e21ce543494
+- name: github.com/coreos/go-systemd
+  version: ""
+  subpackages:
+  - dbus
+- name: github.com/fsnotify/fsnotify
+  version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
+- name: github.com/godbus/dbus
+  version: ""
+- name: github.com/golang/protobuf
+  version: ""
+  subpackages:
+  - proto
+- name: github.com/hashicorp/hcl
+  version: d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1
+  subpackages:
+  - hcl/ast
+  - hcl/parser
+  - hcl/token
+  - json/parser
+  - hcl/scanner
+  - hcl/strconv
+  - json/scanner
+  - json/token
+- name: github.com/magiconair/properties
+  version: e2f061ecfdaca9f35b2e2c12346ffc526f138137
+- name: github.com/mitchellh/mapstructure
+  version: 21a35fb16463dfb7c8eee579c65d995d95e64d1e
+- name: github.com/spf13/cast
+  version: 27b586b42e29bec072fe7379259cc719e1289da6
+- name: github.com/spf13/jwalterweatherman
+  version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
+- name: github.com/spf13/pflag
+  version: 367864438f1b1a3c7db4da06a2f55b144e6784e0
+- name: github.com/spf13/viper
+  version: c1ccc378a054ea8d4e38d8c67f6938d4760b53dd
+- name: golang.org/x/crypto
+  version: ""
+  subpackages:
+  - cast5
+  - openpgp/armor
+  - openpgp/elgamal
+  - openpgp/errors
+  - openpgp/packet
+  - openpgp/s2k
+  - ssh/terminal
+- name: golang.org/x/net
+  version: ""
+  subpackages:
+  - context
+  - html/atom
+  - http2
+  - http2/hpack
+  - internal/timeseries
+  - trace
+- name: golang.org/x/sys
+  version: b518c298ac9dc94b6ac0757394f50d10c5dfa25a
+  subpackages:
+  - unix
+- name: google.golang.org/grpc
+  version: ""
+  subpackages:
+  - codes
+  - credentials
+  - grpclog
+  - internal
+  - metadata
+  - naming
+  - peer
+  - transport
+- name: gopkg.in/yaml.v2
+  version: 80ffc689d4f094f4f1ffa3409332aa3d87e87c7a
+testImports:
+- name: github.com/davecgh/go-spew
+  version: 2df174808ee097f90d259e432cc04442cf60be21
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
+- name: github.com/stretchr/testify
+  version: f390dcf405f7b83c997eac1b06768bb9f44dec18
+  subpackages:
+  - assert

@@ -1,0 +1,50 @@
+package: github.com/coreos/mayday
+import:
+- package: github.com/coreos/go-systemd
+  version: b32b8467dbea18858bfebf65c1a6a761090f2c31
+  subpackages:
+  - dbus
+- package: github.com/godbus/dbus
+  version: a1b8ba5163b7f041b22761461eabd02b70d1f824
+- package: github.com/golang/protobuf
+  version: 2402d76f3d41f928c7902a765dfc872356dd3aad
+  subpackages:
+  - proto
+- package: golang.org/x/crypto
+  version: a7ead6ddf06233883deca151dffaef2effbf498f
+  subpackages:
+  - cast5
+  - openpgp/armor
+  - openpgp/elgamal
+  - openpgp/errors
+  - openpgp/packet
+  - openpgp/s2k
+  - ssh/terminal
+- package: golang.org/x/net
+  version: d513e58596cd55e6f47cd1dcbff6b46035baeccb
+  subpackages:
+  - context
+  - html/atom
+  - http2
+  - http2/hpack
+  - internal/timeseries
+  - trace
+- package: google.golang.org/grpc
+  version: 0f80f5b995e8332b1bdaac1bc37af0482c60147c
+  subpackages:
+  - codes
+  - credentials
+  - grpclog
+  - internal
+  - metadata
+  - naming
+  - peer
+  - transport
+- package: gopkg.in/yaml.v2
+- package: github.com/spf13/viper
+- package: github.com/spf13/pflag
+testImport:
+- package: github.com/stretchr/testify
+  version: ~1.1.3
+  subpackages:
+  - assert
