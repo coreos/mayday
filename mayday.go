@@ -63,11 +63,14 @@ func openFile(f File) (*file.MaydayFile, error) {
 func main() {
 	pflag.BoolP("danger", "d", false, "collect potentially sensitive information (ex, container logs)")
 	pflag.StringP("profile", "p", "default", `set of data to be collected. default: "everything"`)
+	pflag.StringP("output", "o", "", "output file (default: /tmp/mayday-{hostname}-{current time}.tar.gz)")
 
 	// binds cli flag "danger" to viper config danger
 	viper.BindPFlag("danger", pflag.Lookup("danger"))
-
+	viper.BindPFlag("output", pflag.Lookup("output"))
+	// cli arg takes precendence over anything in config files
 	pflag.Parse()
+
 	viper.SetConfigName(pflag.Lookup("profile").Value.String())
 	viper.AddConfigPath("/etc/mayday")
 	viper.AddConfigPath(".")
@@ -137,10 +140,19 @@ func main() {
 	}
 
 	now := time.Now().Format("200601021504.999999999")
-	ws := os.TempDir() + dirPrefix + now
+
+	outputFile := viper.GetString("output")
+	if outputFile == "" {
+		hostname, err := os.Hostname()
+		if err != nil {
+			hostname = "unknownhost"
+		}
+		ws := os.TempDir() + dirPrefix + "-" + hostname + "-" + now
+		outputFile = ws + ".tar.gz"
+	}
 
 	var t mtar.Tar
-	outputFile := ws + ".tar.gz"
+
 	tarfile, err := os.Create(outputFile)
 	if err != nil {
 		panic(err)
