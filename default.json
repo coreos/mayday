@@ -109,7 +109,14 @@
       "link": "iptables"
     },
     {
+      "args": ["ip6tables", "-vnL"],
+      "link": "ip6tables"
+    },
+    {
       "args": ["iptables-save"]
+    },
+    {
+      "args": ["ip6tables-save"]
     }
   ]
 }
