@@ -100,6 +100,23 @@
     {
       "args": ["systemctl", "status", "flanneld.service"],
       "link": "flanneld_status"
+    },
+    {
+      "args": ["slabtop", "-o"]
+    },
+    {
+      "args": ["iptables", "-vnL"],
+      "link": "iptables"
+    },
+    {
+      "args": ["ip6tables", "-vnL"],
+      "link": "ip6tables"
+    },
+    {
+      "args": ["iptables-save"]
+    },
+    {
+      "args": ["ip6tables-save"]
     }
   ]
 }
