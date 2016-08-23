@@ -17,16 +17,18 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+
+	"strings"
 )
 
 const (
-	dirPrefix = "/mayday"
+	dirPrefix     = "/mayday"
+	configDefault = "/etc/mayday/default.json"
 )
 
 type Config struct {
 	Files    []File    `mapstructure:"files"`
 	Commands []Command `mapstructure:"commands"`
-	Danger   bool
 }
 
 type File struct {
@@ -61,25 +63,59 @@ func openFile(f File) (*file.MaydayFile, error) {
 }
 
 func main() {
+	pflag.StringP("config", "c", configDefault, "path configuration file (in place of profile)")
 	pflag.BoolP("danger", "d", false, "collect potentially sensitive information (ex, container logs)")
-	pflag.StringP("profile", "p", "default", `set of data to be collected. default: "everything"`)
+	pflag.StringP("profile", "p", "", "set of data to be collected (default: everything)")
 	pflag.StringP("output", "o", "", "output file (default: /tmp/mayday-{hostname}-{current time}.tar.gz)")
 
-	// binds cli flag "danger" to viper config danger
+	// binds cli flag "danger" to viper config danger, etc.
 	viper.BindPFlag("danger", pflag.Lookup("danger"))
+	viper.BindPFlag("config", pflag.Lookup("config"))
 	viper.BindPFlag("output", pflag.Lookup("output"))
+	viper.BindPFlag("profile", pflag.Lookup("profile"))
 	// cli arg takes precendence over anything in config files
 	pflag.Parse()
 
-	viper.SetConfigName(pflag.Lookup("profile").Value.String())
-	viper.AddConfigPath("/etc/mayday")
-	viper.AddConfigPath(".")
+	// can't define both config and profile at the same time
+	if viper.GetString("config") != configDefault && viper.GetString("profile") != "" {
+		log.Fatal("--profile option cannot be used with --config option. (Point --config to full path of file.)")
+	}
+
+	if viper.GetString("config") == configDefault {
+		// CoreOS config location
+		viper.AddConfigPath("/usr/share/mayday")
+	}
+
+	path_with_filename := strings.Split(viper.GetString("config"), "/")
+	path := path_with_filename[:len(path_with_filename)-1]
+
+	if len(path) == 0 {
+		viper.AddConfigPath(".")
+	} else {
+		viper.AddConfigPath(strings.Join(path, "/"))
+	}
+
+	if viper.GetString("profile") != "" {
+		viper.SetConfigName(viper.GetString("profile"))
+	} else {
+		filename := path_with_filename[len(path_with_filename)-1]
+		filename_no_ext := strings.Split(filename, ".json")[0]
+		viper.SetConfigName(filename_no_ext)
+	}
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Printf("Fatal error reading config: %s \n", err)
-		os.Exit(1)
+		// viper returns an `unsupported config type ""` error if it can't find a file
+		// https://github.com/spf13/viper/issues/210
+		if strings.HasSuffix(err.Error(), `Type ""`) {
+			log.Fatalf("Could not find configuration file in %s",
+				viper.GetString("config"))
+		}
+		log.Printf("Error reading configuration file.")
+		log.Fatalf("Fatal error reading config: %s\n", err)
 	}
+
+	log.Printf("loading config from %s", viper.ConfigFileUsed())
 
 	var tarables []tarable.Tarable
 
