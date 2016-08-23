@@ -1,6 +1,6 @@
 #!/bin/bash -e
 #
-# Run all fleet tests (not including functional)
+# Run all mayday tests (not including functional)
 #   ./test
 #   ./test -v
 #
