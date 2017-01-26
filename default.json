@@ -6,6 +6,12 @@
       "name": "/proc/meminfo",
       "link": "meminfo"
     }, {
+      "name": "/proc/uptime",
+      "link": "uptime"
+    }, {
+      "name": "/proc/loadavg",
+      "link": "loadavg"
+    }, {
       "name": "/proc/mounts",
       "link": "mounts"
     }, {
