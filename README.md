@@ -5,14 +5,14 @@
 ```
 
 
-     ___ ___   ____  __ __  ___     ____  __ __ 
+     ___ ___   ____  __ __  ___     ____  __ __
     |   |   | /    ||  |  ||   \   /    ||  |  |
     | _   _ ||  o  ||  |  ||    \ |  o  ||  |  |
     |  \_/  ||     ||  ~  ||  D  ||     ||  ~  |
     |   |   ||  _  ||___, ||     ||  _  ||___, |
     |   |   ||  |  ||     ||     ||  |  ||     |
-    |___|___||__|__||____/ |_____||__|__||____/ 
-                                                
+    |___|___||__|__||____/ |_____||__|__||____/
+
 
 
 
@@ -59,11 +59,31 @@ Even more data can be collected by adding the `--danger` flag:
 $ sudo mayday --danger
 ```
 
+## what's collected
+
+By default, mayday operates in a "safe" mode. No sensitive information is
+collected -- only information that support might need. This includes things like:
+
+* network connections, firewall rules, and hostname
+* information about currently running processes, including open files and ports
+* log files from systemd services
+* filesystem and memory usage information
+* information about docker and rkt containers, including network and state but NOT logs
+
+The following is collected only if the `--danger` flag is activated:
+
+* logs and environment variables of docker and rkt containers
+
+The following information is **never** collected:
+
+* private keys
+* passwords
+
 ## integration
 
 ### about
 Mayday can be integrated into other projects by defining a default configuration
-file at either the location `/etc/mayday/default.json` or 
+file at either the location `/etc/mayday/default.json` or
 `/usr/share/mayday/default.json`. Through the use of [viper](https://github.com/spf13/viper)
 YAML and TOML are now supported as well, though [CoreOS](https://coreos.com)
 will continue to use JSON as the mechanism of choice.  If multiple products are
@@ -78,10 +98,10 @@ $ mayday -p quay
 
 The configuration file is comprised of objects (As of 1.0.0 valid objects are
 "files" and "commands").  A example of the syntax can be seen in the file
-[default.json](https://github.com/coreos/mayday/blob/master/default.json). 
-Each top level object contains an array of the relevant items to collect. 
+[default.json](https://github.com/coreos/mayday/blob/master/default.json).
+Each top level object contains an array of the relevant items to collect.
 Optionally items can be annotated with a "link" which will provide an easy to
-locate pointer for commonly accessed data. 
+locate pointer for commonly accessed data.
 
 ### collection
 Files are directly retrieved. Commands are executed and the results of standard
