@@ -1,45 +1,49 @@
-hash: e6a39ef1b57c9d23b98e382b417a496b58a45ff9207e1317708edaf6094ba0d0
-updated: 2016-07-15T13:22:50.442643269-07:00
+hash: 9e0798c6488b2e04be83db0cc1a64c3a3c00eec7787b816fa5f278f7011010ff
+updated: 2017-07-10T15:32:12.011240302-07:00
 imports:
-- name: github.com/BurntSushi/toml
-  version: bec2dacf4b590d26237cfebff4471e21ce543494
 - name: github.com/coreos/go-systemd
-  version: ""
+  version: b32b8467dbea18858bfebf65c1a6a761090f2c31
   subpackages:
   - dbus
 - name: github.com/fsnotify/fsnotify
-  version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
+  version: 4da3e2cfbabc9f751898f250b49f2439785783a1
 - name: github.com/godbus/dbus
-  version: ""
+  version: a1b8ba5163b7f041b22761461eabd02b70d1f824
 - name: github.com/golang/protobuf
-  version: ""
+  version: 2402d76f3d41f928c7902a765dfc872356dd3aad
   subpackages:
   - proto
 - name: github.com/hashicorp/hcl
-  version: d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1
+  version: 392dba7d905ed5d04a5794ba89f558b27e2ba1ca
   subpackages:
   - hcl/ast
   - hcl/parser
-  - hcl/token
-  - json/parser
   - hcl/scanner
   - hcl/strconv
+  - hcl/token
+  - json/parser
   - json/scanner
   - json/token
 - name: github.com/magiconair/properties
-  version: e2f061ecfdaca9f35b2e2c12346ffc526f138137
+  version: be5ece7dd465ab0765a9682137865547526d1dfb
 - name: github.com/mitchellh/mapstructure
-  version: 21a35fb16463dfb7c8eee579c65d995d95e64d1e
+  version: d0303fe809921458f417bcf828397a65db30a7e4
+- name: github.com/pelletier/go-toml
+  version: 69d355db5304c0f7f809a2edc054553e7142f016
+- name: github.com/spf13/afero
+  version: 9be650865eab0c12963d8753212f4f9c66cdcf12
+  subpackages:
+  - mem
 - name: github.com/spf13/cast
-  version: 27b586b42e29bec072fe7379259cc719e1289da6
+  version: acbeb36b902d72a7a4c18e8f3241075e7ab763e4
 - name: github.com/spf13/jwalterweatherman
-  version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
+  version: 0efa5202c04663c757d84f90f5219c1250baf94f
 - name: github.com/spf13/pflag
-  version: 367864438f1b1a3c7db4da06a2f55b144e6784e0
+  version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - name: github.com/spf13/viper
-  version: c1ccc378a054ea8d4e38d8c67f6938d4760b53dd
+  version: c1de95864d73a5465492829d7cb2dd422b19ac96
 - name: golang.org/x/crypto
-  version: ""
+  version: a7ead6ddf06233883deca151dffaef2effbf498f
   subpackages:
   - cast5
   - openpgp/armor
@@ -49,7 +53,7 @@ imports:
   - openpgp/s2k
   - ssh/terminal
 - name: golang.org/x/net
-  version: ""
+  version: d513e58596cd55e6f47cd1dcbff6b46035baeccb
   subpackages:
   - context
   - html/atom
@@ -58,11 +62,16 @@ imports:
   - internal/timeseries
   - trace
 - name: golang.org/x/sys
-  version: b518c298ac9dc94b6ac0757394f50d10c5dfa25a
+  version: abf9c25f54453410d0c6668e519582a9e1115027
   subpackages:
   - unix
+- name: golang.org/x/text
+  version: cfdf022e86b4ecfb646e1efbd7db175dd623a8fa
+  subpackages:
+  - transform
+  - unicode/norm
 - name: google.golang.org/grpc
-  version: ""
+  version: 0f80f5b995e8332b1bdaac1bc37af0482c60147c
   subpackages:
   - codes
   - credentials
@@ -76,7 +85,7 @@ imports:
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
 testImports:
 - name: github.com/davecgh/go-spew
-  version: 2df174808ee097f90d259e432cc04442cf60be21
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
 - name: github.com/pmezard/go-difflib
@@ -84,6 +93,6 @@ testImports:
   subpackages:
   - difflib
 - name: github.com/stretchr/testify
-  version: f390dcf405f7b83c997eac1b06768bb9f44dec18
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
