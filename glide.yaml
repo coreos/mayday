@@ -44,6 +44,8 @@ import:
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
 - package: github.com/spf13/viper
 - package: github.com/spf13/pflag
+- package: github.com/magiconair/properties
+  version: ^1.7.2
 testImport:
 - package: github.com/stretchr/testify
   version: ~1.1.3
