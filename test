@@ -30,7 +30,7 @@ if [[ $* == *--cover* ]]; then
 	rm -rf tmp/*.out
 else
 	# just report percentage
-	go test github.com/coreos/mayday github.com/coreos/mayday/mayday/... -cover
+	go test $(glide novendor) -cover
 fi
 
 echo "Checking gofmt..."

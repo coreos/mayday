@@ -1,6 +1,17 @@
 language: go
+before_install:
+  - go get github.com/Masterminds/glide
+install: go get github.com/stretchr/testify
 go:
-  - 1.6
-
+  - 1.8
+go_import_path: github.com/coreos/mayday
 script:
  - ./test
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+addons:
+  apt:
+    packages:
+     - libsystemd-journal-dev
