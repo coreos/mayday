@@ -89,7 +89,6 @@ func (j *SystemdJournal) Link() string {
 }
 
 func (j *SystemdJournal) Run() error {
-
 	var b bytes.Buffer
 	j.content = &b
 	writer := bufio.NewWriter(j.content)

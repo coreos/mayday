@@ -3,6 +3,7 @@ package docker
 import (
 	"encoding/json"
 	"io/ioutil"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -76,20 +77,37 @@ func TestGetLogsSafe(t *testing.T) {
 }
 
 func TestContentSafeMode(t *testing.T) {
-	dc := New(strings.NewReader(dcString), dcUuid)
-	c := dc.Content()
 
-	var cParsed interface{}
-	var dcParsed interface{}
+	testCases := []struct {
+		config   string
+		scrubbed string
+	}{
+		{
+			config:   dcString,
+			scrubbed: dcStringScrubbedEnv,
+		},
+		{
+			// regression test for https://github.com/coreos/bugs/issues/2077; as long as it doesn't panic it's okay
+			config:   `{"Config": {"NoEnvKey"}`,
+			scrubbed: `{"Config": {"NoEnvKey"}`,
+		},
+	}
 
-	cbytes, _ := ioutil.ReadAll(c)
-	dcbytes := []byte(dcStringScrubbedEnv)
+	for i, testCase := range testCases {
+		dc := New(strings.NewReader(testCase.config), strconv.Itoa(i))
+		c := dc.Content()
+		cbytes, _ := ioutil.ReadAll(c)
 
-	json.Unmarshal(cbytes, &cParsed)
-	// after passing through dc.Content(), the env variables should be scrubbed
-	// (as the --danger flag has not been set)
-	json.Unmarshal(dcbytes, &dcParsed)
-	assert.Equal(t, cParsed, dcParsed)
+		var cParsed interface{}
+		var dcParsed interface{}
+
+		dcbytes := []byte(testCase.scrubbed)
+		json.Unmarshal(cbytes, &cParsed)
+		// after passing through dc.Content(), the env variables should be scrubbed
+		// (as the --danger flag has not been set)
+		json.Unmarshal(dcbytes, &dcParsed)
+		assert.Equal(t, cParsed, dcParsed)
+	}
 }
 
 func TestContentDangerMode(t *testing.T) {

@@ -19,6 +19,12 @@ const (
 	dockerDir = "/var/lib/docker/containers"
 )
 
+// errUnrecognizedFormat is the content that will be returned when a given bit
+// of content is malformed in a config v2 map
+// In a better world, we would return (bytes, err) for Content, but how tarable
+// is designed, it's expected that failures don't happen as best I can tell.
+var errUnrecognizedFormat = []byte("unrecognized docker config format")
+
 type DockerContainer struct {
 	containerId string        // container id
 	file        io.Reader     // config file -- /var/lib/docker/containers/{uuid}/config.v2.json
@@ -36,34 +42,64 @@ func (d *DockerContainer) Content() *bytes.Buffer {
 		return d.content
 	}
 
-	// unmarshal docker config into interface
-	var config interface{}
+	// a docker v2 config is a map of string->???
+	var config map[string]json.RawMessage
 
 	fileContent, err := ioutil.ReadAll(d.file)
 	if err != nil {
 		log.Printf("error reading docker container configuration: %s", err)
+		return bytes.NewBuffer(errUnrecognizedFormat)
 	}
 
 	err = json.Unmarshal(fileContent, &config)
 	if err != nil {
 		log.Printf("error reading docker container configuration: %s", err)
+		return bytes.NewBuffer(errUnrecognizedFormat)
 	}
-	configInterface := config.(map[string]interface{})
+	configData, ok := config["Config"]
+	if !ok {
+		log.Printf("unrecognized docker config for container %q: no Config key", d.containerId)
+		return bytes.NewBuffer(errUnrecognizedFormat)
+	}
 
 	if !viper.GetBool("danger") {
-		configMap := configInterface["Config"].(map[string]interface{})
-		env := configMap["Env"].([]interface{})
-		var newEnv []string
-		for _, e := range env {
-			varSplit := strings.SplitAfterN(e.(string), "=", 2)
-			newEnv = append(newEnv, varSplit[0]+"scrubbed by mayday")
+		// config.Config is also of type string->???; delay ??? decoding
+		var configConfig map[string]json.RawMessage
+		if err := json.Unmarshal(configData, &configConfig); err != nil {
+			log.Printf("unrecognized docker config.Config for container %q: %v", d.containerId, err)
+			return bytes.NewBuffer(errUnrecognizedFormat)
 		}
-		configMap["Env"] = newEnv
+		if configEnv, ok := configConfig["Env"]; ok {
+			var envString []string
+			if err := json.Unmarshal(configEnv, &envString); err != nil {
+				log.Printf("error parsing docker environment variables for %q: %v", d.containerId, err)
+				return bytes.NewBuffer([]byte("could not unmarshal Env"))
+			}
+			var newEnv []string
+			for _, e := range envString {
+				varSplit := strings.SplitAfterN(e, "=", 2)
+				newEnv = append(newEnv, varSplit[0]+"scrubbed by mayday")
+			}
+
+			newEnvRaw, err := json.Marshal(newEnv)
+			if err != nil {
+				log.Print("error marshalling new env: %v", err)
+				return bytes.NewBuffer([]byte("could not unmarshal Env"))
+			}
+			configConfig["Env"] = newEnvRaw
+			configConfigRaw, err := json.Marshal(configConfig)
+			if err != nil {
+				log.Print("error marshalling new config: %v", err)
+				return bytes.NewBuffer([]byte("json marshal error"))
+			}
+			config["Config"] = configConfigRaw
+		}
 	}
 
-	byteContent, err := json.MarshalIndent(configInterface, "", "  ")
+	byteContent, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
 		log.Print("error saving docker container configuration!")
+		return bytes.NewBuffer([]byte("json marshal error :["))
 	}
 
 	d.content = bytes.NewBuffer(byteContent)
