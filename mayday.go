@@ -2,10 +2,12 @@ package main
 
 import (
 	"archive/tar"
+	"bytes"
 	"log"
 	"os"
 	"time"
 
+	"github.com/coreos/mayday/config"
 	"github.com/coreos/mayday/mayday"
 	"github.com/coreos/mayday/mayday/plugins/command"
 	"github.com/coreos/mayday/mayday/plugins/docker"
@@ -108,25 +110,37 @@ func main() {
 		// viper returns an `unsupported config type ""` error if it can't find a file
 		// https://github.com/spf13/viper/issues/210
 		if strings.HasSuffix(err.Error(), `Type ""`) {
-			log.Fatalf("Could not find configuration file in %s",
-				viper.GetString("config"))
-		}
-		log.Printf("Error reading configuration file.")
-		log.Fatalf("Fatal error reading config: %s\n", err)
-	}
+			// load the default config asset
+			defaultConfig, err := config.Asset("config/default.json")
+			log.Print("Using built-in configuration defaults")
+			if err != nil {
+				log.Fatal("Error loading default config: %s", err)
+			}
 
-	log.Printf("loading config from %s", viper.ConfigFileUsed())
+			viper.SetConfigType("json")
+			err = viper.MergeConfig(bytes.NewBuffer(defaultConfig))
+		} else {
+			log.Printf("Error reading configuration file.")
+			log.Fatalf("Fatal error reading config: %s\n", err)
+		}
+	} else {
+		log.Printf("loading config from %s", viper.ConfigFileUsed())
+	}
 
 	var tarables []tarable.Tarable
 
 	var C Config
 
 	// fill C with configuration data
-	viper.Unmarshal(&C)
+	err = viper.Unmarshal(&C)
+	if err != nil {
+		log.Fatalf("Could not unmarshal configuration: %s", err)
+	}
 
 	journals, err := journal.List()
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Could not retreive system services. Skipping...")
+		log.Printf("Service error: %s", err)
 	}
 
 	pods, rktLogs, err := rkt.GetPods()
