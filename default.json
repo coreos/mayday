@@ -19,6 +19,14 @@
       "link": "hostname"
     },
     {
+      "args": ["uptime"],
+      "link": "uptime"
+    },
+    {
+      "args": ["dmesg"],
+      "link": "dmesg"
+    },
+    {
       "args": ["date"],
       "link": "date"
     },
