@@ -86,16 +86,8 @@
       "link": "running_units"
     },
     {
-      "args": ["systemctl", "status", "etcd.service"],
-      "link": "etcd_status"
-    },
-    {
-      "args": ["systemctl", "status", "etcd2.service"],
-      "link": "etcd2_status"
-    },
-    {
-      "args": ["systemctl", "status", "fleet.service"],
-      "link": "fleet_status"
+      "args": ["systemctl", "status", "etcd-member.service"],
+      "link": "etcd_member_status"
     },
     {
       "args": ["systemctl", "status", "flanneld.service"],
