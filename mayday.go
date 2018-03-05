@@ -14,6 +14,7 @@ import (
 	"github.com/coreos/mayday/mayday/plugins/rkt"
 	mtar "github.com/coreos/mayday/mayday/tar"
 	"github.com/coreos/mayday/mayday/tarable"
+	"github.com/coreos/mayday/mayday/upload"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -65,14 +66,18 @@ func openFile(f File) (*file.MaydayFile, error) {
 func main() {
 	pflag.StringP("config", "c", configDefault, "path configuration file (in place of profile)")
 	pflag.BoolP("danger", "d", false, "collect potentially sensitive information (ex, container logs)")
+	pflag.BoolP("upload", "u", false, "upload dump to CoreOS support")
 	pflag.StringP("profile", "p", "", "set of data to be collected (default: everything)")
 	pflag.StringP("output", "o", "", "output file (default: /tmp/mayday-{hostname}-{current time}.tar.gz)")
+	pflag.StringP("upload-server", "s", "http://localhost:8080", "mayday ingestion service server")
 
 	// binds cli flag "danger" to viper config danger, etc.
 	viper.BindPFlag("danger", pflag.Lookup("danger"))
 	viper.BindPFlag("config", pflag.Lookup("config"))
 	viper.BindPFlag("output", pflag.Lookup("output"))
 	viper.BindPFlag("profile", pflag.Lookup("profile"))
+	viper.BindPFlag("upload", pflag.Lookup("upload"))
+	viper.BindPFlag("upload-server", pflag.Lookup("upload-server"))
 	// cli arg takes precendence over anything in config files
 	pflag.Parse()
 
@@ -197,6 +202,17 @@ func main() {
 	t.Init(tarfile, now)
 
 	mayday.Run(t, tarables)
+	if viper.GetBool("upload") {
+		log.Print("uploading to mayday ingestion service")
+		_, err = tarfile.Seek(0, 0)
+		res, err := upload.Upload(tarfile)
+		if err != nil {
+			log.Printf("error uploading to ingestion service: %s", err)
+		} else {
+			log.Printf("access token: %s", res.Access)
+		}
+	}
+
 	t.Close()
 
 	log.Printf("Output saved in %v\n", outputFile)
